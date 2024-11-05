@@ -1,0 +1,35 @@
+version: '3.3'
+
+services:
+  postgres:
+    image: postgres:latest   # Use the official PostgreSQL image
+    container_name: postgres_container  # Name of the container
+    environment:
+      POSTGRES_USER: myuser           # Username for PostgreSQL
+      POSTGRES_PASSWORD: mypassword    # Password for PostgreSQL
+      POSTGRES_DB: mydatabase          # Database name to be created
+    ports:
+      - "5432:5432"   # Map PostgreSQL port to host machine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data   # Persist data
+    networks:
+      - postgres_network  # Ensure both containers are on the same network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest  # Official pgAdmin image
+    container_name: pgadmin_container
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com  # Default pgAdmin login email
+      PGADMIN_DEFAULT_PASSWORD: admin          # Default pgAdmin password
+    ports:
+      - "5050:80"  # Expose pgAdmin on port 5050
+    depends_on:
+      - postgres   # pgAdmin will wait for the PostgreSQL container to start
+    networks:
+      - postgres_network  # Ensure both containers are on the same network
+
+volumes:
+  postgres_data:
+
+networks:
+  postgres_network:
