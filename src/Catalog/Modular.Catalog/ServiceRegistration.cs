@@ -8,14 +8,18 @@ public static class ServiceRegistration
     {
         string? connectionString = configuration.GetConnectionString("DefaultConnection");
 
-        services.AddDbContext<CatalogDbContext>(options =>
+        services.AddSingleton<EventsDoOutboXMessagesInterceptors>();
+        services.AddDbContext<CatalogDbContext>((sp, options) =>
         {
+            var interceptor = sp.GetRequiredService<EventsDoOutboXMessagesInterceptors>();
+
             options.UseNpgsql(connectionString, o =>
             {
                 // Specify the schema and table name for the migration history
                 o.MigrationsHistoryTable("__EFMigrationsHistory", CatalogDbContext.Schema);
                 o.MigrationsAssembly(typeof(CatalogDbContext).Assembly.FullName);
-            });
+            })
+            .AddInterceptors(interceptor);
         });
 
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(ServiceRegistration).Assembly));

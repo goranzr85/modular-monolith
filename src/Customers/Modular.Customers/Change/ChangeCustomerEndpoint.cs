@@ -9,10 +9,10 @@ public sealed class ChangeAddressEndpoint : ICarterModule
 
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/customers/id", async (Guid id, ChangeCustomerRequest request, ISender sender, CancellationToken cancellationToken) =>
+        app.MapPut("/api/customers/id", async (Guid id, ChangeCustomerRequest request, ISender sender, CancellationToken cancellationToken) =>
         {
             ChangeCustomerCommand command = new(id, request.FirstName, request.MiddleName, request.LastName,
-                request.Street, request.City, request.Zip, request.State, request.Email, request.Phone);
+                request.Address, request.ShippingAddress, request.Email, request.Phone);
 
             ErrorOr<Unit> response = await sender.Send(command, cancellationToken);
 

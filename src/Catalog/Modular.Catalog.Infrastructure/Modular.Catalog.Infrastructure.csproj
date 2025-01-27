@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<ItemGroup>
+		<PackageReference Include="MediatR" />
+		<PackageReference Include="Newtonsoft.Json" />
+		<PackageReference Include="Quartz" />
+		<PackageReference Include="Quartz.Extensions.Hosting" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\Common\Modular.Common1\Modular.Common.csproj" />
+	  <ProjectReference Include="..\Modular.Catalog1\Modular.Catalog1.csproj" />
+	</ItemGroup>
+
+</Project>

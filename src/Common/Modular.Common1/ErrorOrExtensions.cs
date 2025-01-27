@@ -1,6 +1,7 @@
 ﻿using ErrorOr;
 using Microsoft.AspNetCore.Http;
 
+
 namespace Modular.Common;
 
 public static class ErrorOrExtensions

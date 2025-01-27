@@ -6,7 +6,7 @@ using Modular.Warehouse.Errors;
 
 namespace Modular.Warehouse.Receiving;
 
-internal sealed record ReceivingProductCommand(Guid ProductId, uint Quantity) : IRequest<ErrorOr<Unit>>
+internal sealed record ReceivingProductCommand(string Sku, uint Quantity) : IRequest<ErrorOr<Unit>>
 {
 }
 
@@ -24,21 +24,21 @@ internal sealed class ReceivingProductCommandHandler : IRequestHandler<Receiving
     public async Task<ErrorOr<Unit>> Handle(ReceivingProductCommand request, CancellationToken cancellationToken)
     {
         Product? product = await _warehouseDbContext.Products
-                   .FirstOrDefaultAsync(p => p.Id == request.ProductId, cancellationToken);
+                   .FirstOrDefaultAsync(p => p.Sku == request.Sku, cancellationToken);
 
         if (product is null)
         {
-            return ProductErrors.ProductNotFound(request.ProductId);
+            return ProductErrors.ProductNotFound(request.Sku);
         }
 
-        _logger.LogDebug("Increased quantity of product {ProductId} for {Quantity} pieces.", request.ProductId, request.Quantity);
+        _logger.LogDebug("Increased quantity of product {Sku} for {Quantity} pieces.", request.Sku, request.Quantity);
 
         product.IncreaseQuantity(request.Quantity);
 
         _warehouseDbContext.Update(product);
         await _warehouseDbContext.SaveChangesAsync(cancellationToken);
 
-        _logger.LogDebug("Increased quantity of product {ProductId} for {Quantity} pieces succeeded.", request.ProductId, request.Quantity);
+        _logger.LogDebug("Increased quantity of product {Sku} for {Quantity} pieces.", request.Sku, request.Quantity);
 
         return Unit.Value;
     }

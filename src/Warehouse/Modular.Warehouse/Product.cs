@@ -5,7 +5,6 @@ namespace Modular.Warehouse;
 
 internal sealed class Product
 {
-    public Guid Id { get; internal init; }
     public string Sku { get; internal init; }
     public uint Quantity { get; private set; }
 
@@ -26,11 +25,10 @@ internal sealed class Product
         return Unit.Value;
     }
 
-    internal static Product Create(Guid id, string sku)
+    internal static Product Create(string sku)
     {
         return new Product
         {
-            Id = id,
             Sku = sku,
             Quantity = 0
         };

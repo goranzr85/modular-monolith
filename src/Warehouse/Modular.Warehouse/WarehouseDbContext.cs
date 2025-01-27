@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Modular.Warehouse;
 
@@ -19,7 +18,7 @@ internal class WarehouseDbContext : DbContext
 
         modelBuilder.Entity<Product>(builder =>
         {
-            builder.HasKey(c => c.Id);
+            builder.HasKey(c => c.Sku);
 
             builder.Property(c => c.Sku)
                 .HasMaxLength(15)

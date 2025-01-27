@@ -13,9 +13,9 @@ public sealed class CreateProductEndpoint : ICarterModule
         {
             CreateProductCommand command = new(request.Sku, request.Name, request.Description, request.Price);
 
-            ErrorOr<Guid> response = await sender.Send(command, cancellationToken);
+            ErrorOr<Unit> response = await sender.Send(command, cancellationToken);
 
-            return response.ToResult((productId) => Results.Created($"/api/products/{productId}", productId));
+            return response.ToResult((sku) => Results.Created($"/api/products/{sku}", sku));
         })
         .WithName("CreateProduct")
         .WithTags("Catalogs")

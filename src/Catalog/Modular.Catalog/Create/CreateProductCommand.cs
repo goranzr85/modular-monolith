@@ -5,11 +5,11 @@ using Modular.Catalog.Errors;
 
 namespace Modular.Catalog.Create;
 
-internal sealed record CreateProductCommand(string Sku, string Name, string Description, decimal Price) : IRequest<ErrorOr<Guid>>
+internal sealed record CreateProductCommand(string Sku, string Name, string Description, decimal Price) : IRequest<ErrorOr<Unit>>
 {
 }
 
-internal sealed class CreateProductCommandHandler : IRequestHandler<CreateProductCommand, ErrorOr<Guid>>
+internal sealed class CreateProductCommandHandler : IRequestHandler<CreateProductCommand, ErrorOr<Unit>>
 {
     private readonly CatalogDbContext _customerDbContext;
     private readonly ILogger<CreateProductCommandHandler> _logger;
@@ -20,14 +20,14 @@ internal sealed class CreateProductCommandHandler : IRequestHandler<CreateProduc
         _logger = logger;
     }
 
-    public async Task<ErrorOr<Guid>> Handle(CreateProductCommand request, CancellationToken cancellationToken)
+    public async Task<ErrorOr<Unit>> Handle(CreateProductCommand request, CancellationToken cancellationToken)
     {
         try
         {
             Product? product = await _customerDbContext.Products
                 .FirstOrDefaultAsync(p => p.Sku == request.Sku, cancellationToken);
 
-            if(product is not null)
+            if (product is not null)
             {
                 return ProductErrors.ProductAlreadyExists(request.Sku);
             }
@@ -44,7 +44,7 @@ internal sealed class CreateProductCommandHandler : IRequestHandler<CreateProduc
             await _customerDbContext.Products.AddAsync(product, cancellationToken);
             await _customerDbContext.SaveChangesAsync(cancellationToken);
 
-            return product.Id;
+            return Unit.Value;
         }
         catch (Exception ex)
         {

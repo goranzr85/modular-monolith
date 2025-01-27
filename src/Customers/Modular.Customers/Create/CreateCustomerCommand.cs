@@ -4,8 +4,8 @@ using Modular.Customers.Models;
 
 namespace Modular.Customers.Create;
 
-internal sealed record CreateCustomerCommand(string FirstName, string MiddleName, string LastName,
-string Street, string City, string Zip, string State, string Email, string Phone) : IRequest<ErrorOr<CreateCustomerResponse>>
+internal sealed record CreateCustomerCommand(string FirstName, string? MiddleName, string LastName,
+AddressDto Address, AddressDto? ShippingAddress, string? Email, string? Phone) : IRequest<ErrorOr<CreateCustomerResponse>>
 {
 }
 
@@ -32,17 +32,22 @@ internal sealed class CreateCustomerCommandHandler : IRequestHandler<CreateCusto
             return fullNameResponse.FirstError;
         }
 
-        Address address = Address.Create(request.Street, request.City, request.State, request.Zip);
+        Address address = Address.Create(request.Address.Street, request.Address.City, request.Address.State, request.Address.Zip);
+
+        Address shippingAddress = request.ShippingAddress is not null ?
+                Address.Create(request.ShippingAddress.Street, request.ShippingAddress.City, request.ShippingAddress.State, request.ShippingAddress.Zip)
+                : address;
+
         ErrorOr<Contact> contactResponse = await _contactFactory.CreateAsync(request.Email, request.Phone);
 
-        if(contactResponse.IsError)
+        if (contactResponse.IsError)
         {
             return contactResponse.FirstError;
         }
 
         try
         {
-            Customer customer = Customer.Create(fullNameResponse.Value, address, address, contactResponse.Value);
+            Customer customer = Customer.Create(fullNameResponse.Value, address, shippingAddress, contactResponse.Value);
 
             await _customerDbContext.Customers.AddAsync(customer, cancellationToken);
             await _customerDbContext.SaveChangesAsync(cancellationToken);
@@ -52,7 +57,7 @@ internal sealed class CreateCustomerCommandHandler : IRequestHandler<CreateCusto
         catch (Exception ex)
         {
             _logger.LogError(ex, "Creating customer failed");
-            return Error.Failure("Customer.Failure","Creating customer failed");
+            return Error.Failure("Customer.Failure", "Creating customer failed");
         }
     }
 }

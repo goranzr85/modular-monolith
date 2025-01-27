@@ -6,7 +6,7 @@ using Modular.Warehouse.Errors;
 
 namespace Modular.Warehouse.Shipping;
 
-internal sealed record ShippingProductCommand(Guid ProductId, uint Quantity) : IRequest<ErrorOr<Unit>>
+internal sealed record ShippingProductCommand(string Sku, uint Quantity) : IRequest<ErrorOr<Unit>>
 {
 }
 
@@ -24,14 +24,14 @@ internal sealed class ShippingProductCommandHandler : IRequestHandler<ShippingPr
     public async Task<ErrorOr<Unit>> Handle(ShippingProductCommand request, CancellationToken cancellationToken)
     {
         Product? product = await _warehouseDbContext.Products
-                   .FirstOrDefaultAsync(p => p.Id == request.ProductId, cancellationToken);
+                   .FirstOrDefaultAsync(p => p.Sku == request.Sku, cancellationToken);
 
         if (product is null)
         {
-            return ProductErrors.ProductNotFound(request.ProductId);
+            return ProductErrors.ProductNotFound(request.Sku);
         }
 
-        _logger.LogDebug("Shipping {Quantity} pieces of product {ProductId}.", request.Quantity, request.ProductId);
+        _logger.LogDebug("Shipping {Quantity} pieces of product {Sku}.", request.Quantity, request.Sku);
 
         var result = product.DecreaseQuantity(request.Quantity);
 
@@ -43,7 +43,7 @@ internal sealed class ShippingProductCommandHandler : IRequestHandler<ShippingPr
         _warehouseDbContext.Update(product);
         await _warehouseDbContext.SaveChangesAsync(cancellationToken);
 
-        _logger.LogDebug("Shipping {Quantity} pieces of product {ProductId} succeeded.", request.Quantity, request.ProductId);
+        _logger.LogDebug("Shipping {Quantity} pieces of product {Sku} succeeded.", request.Quantity, request.Sku);
 
         return Unit.Value;
     }

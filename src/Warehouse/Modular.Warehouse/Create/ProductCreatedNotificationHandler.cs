@@ -18,15 +18,15 @@ internal class ProductCreatedNotificationHandler : INotificationHandler<ProductC
     public async Task Handle(ProductCreatedIntegrationEvent notification, CancellationToken cancellationToken)
     {
         Product? product = await _warehouseDbContext.Products
-            .FirstOrDefaultAsync(p => p.Id == notification.Id, cancellationToken);
+            .FirstOrDefaultAsync(p => p.Sku == notification.Sku, cancellationToken);
 
         if (product is not null)
         {
-            _logger.LogWarning("Product with id {ProductId} already exists", notification.Id);
+            _logger.LogWarning("Product with SKU: {Sku} already exists", notification.Sku);
             return;
         }
 
-        product = Product.Create(notification.Id, notification.Sku);
+        product = Product.Create(notification.Sku);
 
         await _warehouseDbContext.AddAsync(product, cancellationToken);
         await _warehouseDbContext.SaveChangesAsync(cancellationToken);

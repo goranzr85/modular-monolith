@@ -24,13 +24,13 @@ namespace Modular.Customers.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Modular.Customers.Customer", b =>
+            modelBuilder.Entity("Modular.Customers.Models.Customer", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.ComplexProperty<Dictionary<string, object>>("Address", "Modular.Customers.Customer.Address#Address", b1 =>
+                    b.ComplexProperty<Dictionary<string, object>>("Address", "Modular.Customers.Models.Customer.Address#Address", b1 =>
                         {
                             b1.IsRequired();
 
@@ -59,7 +59,7 @@ namespace Modular.Customers.Migrations
                                 .HasColumnName("Zip");
                         });
 
-                    b.ComplexProperty<Dictionary<string, object>>("Contact", "Modular.Customers.Customer.Contact#Contact", b1 =>
+                    b.ComplexProperty<Dictionary<string, object>>("Contact", "Modular.Customers.Models.Customer.Contact#Contact", b1 =>
                         {
                             b1.IsRequired();
 
@@ -74,7 +74,7 @@ namespace Modular.Customers.Migrations
                                 .HasColumnName("Phone");
                         });
 
-                    b.ComplexProperty<Dictionary<string, object>>("FullName", "Modular.Customers.Customer.FullName#FullName", b1 =>
+                    b.ComplexProperty<Dictionary<string, object>>("FullName", "Modular.Customers.Models.Customer.FullName#FullName", b1 =>
                         {
                             b1.IsRequired();
 
@@ -94,6 +94,35 @@ namespace Modular.Customers.Migrations
                                 .HasMaxLength(50)
                                 .HasColumnType("character varying(50)")
                                 .HasColumnName("MiddleName");
+                        });
+
+                    b.ComplexProperty<Dictionary<string, object>>("ShippingAddress", "Modular.Customers.Models.Customer.ShippingAddress#Address", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<string>("City")
+                                .IsRequired()
+                                .HasMaxLength(30)
+                                .HasColumnType("character varying(30)")
+                                .HasColumnName("ShippingCity");
+
+                            b1.Property<string>("State")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("ShippingState");
+
+                            b1.Property<string>("Street")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("ShippingStreet");
+
+                            b1.Property<string>("Zip")
+                                .IsRequired()
+                                .HasMaxLength(15)
+                                .HasColumnType("character varying(15)")
+                                .HasColumnName("ShippingZip");
                         });
 
                     b.HasKey("Id");

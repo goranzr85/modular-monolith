@@ -5,32 +5,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\Common\Modular.Common\Modular.Common.csproj" />
+		<PackageReference Include="FluentValidation" />
+		<PackageReference Include="FluentValidator" />
+		<PackageReference Include="MediatR" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" />
+		<PackageReference Include="Carter"  />
+		<PackageReference Include="ErrorOr"  />
 	</ItemGroup>
-
-	<!--<ItemGroup>
-		<PackageReference Include="Carter" Version="8.2.1" />
-		<PackageReference Include="ErrorOr" Version="2.0.1" />
-		<PackageReference Include="MediatR" Version="12.4.1" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" />
-		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.11.0" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.11.0" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.10" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.10">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.10" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.10">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.8" />
-		<PackageReference Include="Ulid" Version="1.3.4" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Folder Include="Migrations\" />
-	</ItemGroup>-->
 
 </Project>

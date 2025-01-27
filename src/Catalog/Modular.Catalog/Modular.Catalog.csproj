@@ -5,7 +5,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\Common\Modular.Common\Modular.Common.csproj" />
+	  <PackageReference Include="Newtonsoft.Json" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\Modular.ProductIntegrationEvents\Modular.Catalog.IntegrationEvents.csproj" />
 	</ItemGroup>
 
 </Project>

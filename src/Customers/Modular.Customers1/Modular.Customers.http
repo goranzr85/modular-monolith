@@ -1,0 +1,6 @@
+@Modular.Customers_HostAddress = http://localhost:5229
+
+GET {{Modular.Customers_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

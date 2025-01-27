@@ -8,21 +8,20 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Carter" Version="8.2.1" />
-		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.8" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.8">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.11.0" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.11.0" />
-		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+		<PackageReference Include="Carter" />
+		<PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" />
+		<PackageReference Include="Microsoft.CodeAnalysis.Common" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+		<PackageReference Include="Quartz.Extensions.Hosting" />
+		<PackageReference Include="Swashbuckle.AspNetCore" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\Catalog\Modular.Catalog\Modular.Catalog.csproj" />
-	  <ProjectReference Include="..\Customers\Modular.Customers\Modular.Customers.csproj" />
+		<ProjectReference Include="..\Catalog\Modular.Catalog.Infrastructure\Modular.Catalog.Infrastructure.csproj" />
+		<ProjectReference Include="..\Customers\Modular.Customers1\Modular.Customers.csproj" />
+		<ProjectReference Include="..\Warehouse\Modular.Warehouse\Modular.Warehouse.csproj" />
 	</ItemGroup>
 
 </Project>
