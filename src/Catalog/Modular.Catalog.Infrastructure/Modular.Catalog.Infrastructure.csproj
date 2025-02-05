@@ -9,7 +9,7 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\..\Common\Modular.Common1\Modular.Common.csproj" />
-	  <ProjectReference Include="..\Modular.Catalog1\Modular.Catalog1.csproj" />
+	  <ProjectReference Include="..\Modular.Catalog1\Modular.Catalog.csproj" />
 	</ItemGroup>
 
 </Project>
