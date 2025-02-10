@@ -4,7 +4,7 @@ using Modular.Common;
 
 namespace Modular.Catalog;
 
-public class CatalogDbContext : DbContext
+public sealed class CatalogDbContext : DbContext
 {
     internal static readonly string Schema = "Catalogs";
 

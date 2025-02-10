@@ -3,6 +3,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Modular.Catalog.Errors;
+using Modular.Common;
 
 namespace Modular.Catalog.Change;
 

@@ -5,7 +5,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\Common\Modular.Common1\Modular.Common.csproj" />
+	  <ProjectReference Include="..\..\Common\Modular.Common\Modular.Common.csproj" />
 	</ItemGroup>
 
 </Project>

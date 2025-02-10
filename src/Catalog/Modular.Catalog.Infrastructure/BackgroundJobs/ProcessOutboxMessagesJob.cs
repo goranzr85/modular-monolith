@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using Modular.Common;
 using Newtonsoft.Json;
 using Quartz;
-using System.Text.Json;
 
 namespace Modular.Catalog.Infrastructure.BackgroundJobs;
 

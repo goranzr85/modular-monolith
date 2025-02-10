@@ -1,7 +1,9 @@
 ﻿using ErrorOr;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Modular.Catalog.Errors;
+using Modular.Common;
 
 namespace Modular.Catalog.Create;
 

@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Modular.Catalog;
 
@@ -8,10 +10,10 @@ public static class ServiceRegistration
     {
         string? connectionString = configuration.GetConnectionString("DefaultConnection");
 
-        services.AddSingleton<EventsDoOutboXMessagesInterceptors>();
+        services.AddSingleton<EventsToOutboxMessagesInterceptors>();
         services.AddDbContext<CatalogDbContext>((sp, options) =>
         {
-            var interceptor = sp.GetRequiredService<EventsDoOutboXMessagesInterceptors>();
+            var interceptor = sp.GetRequiredService<EventsToOutboxMessagesInterceptors>();
 
             options.UseNpgsql(connectionString, o =>
             {

@@ -1,12 +1,14 @@
 ﻿using Carter;
 using ErrorOr;
 using MediatR;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Modular.Common;
 
 namespace Modular.Catalog.Create;
 public sealed class CreateProductEndpoint : ICarterModule
 {
-
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapPost("/api/products", async (CreateProductRequest request, ISender sender, CancellationToken cancellationToken) =>
@@ -23,5 +25,4 @@ public sealed class CreateProductEndpoint : ICarterModule
         .Produces(StatusCodes.Status500InternalServerError)
         .Produces(StatusCodes.Status201Created);
     }
-
 }

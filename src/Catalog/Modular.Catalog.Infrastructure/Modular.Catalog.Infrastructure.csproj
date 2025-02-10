@@ -8,8 +8,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\Common\Modular.Common1\Modular.Common.csproj" />
-	  <ProjectReference Include="..\Modular.Catalog1\Modular.Catalog.csproj" />
+	  <ProjectReference Include="..\..\Common\Modular.Common\Modular.Common.csproj" />
+	  <ProjectReference Include="..\Modular.Catalog\Modular.Catalog.csproj" />
 	</ItemGroup>
 
 </Project>
