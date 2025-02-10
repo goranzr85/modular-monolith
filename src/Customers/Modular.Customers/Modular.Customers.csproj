@@ -1,16 +1,39 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<OutputType>Library</OutputType>
-	</PropertyGroup>
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="FluentValidation" />
 		<PackageReference Include="FluentValidator" />
 		<PackageReference Include="MediatR" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" />
-		<PackageReference Include="Carter"  />
-		<PackageReference Include="ErrorOr"  />
+		<PackageReference Include="Carter" />
+		<PackageReference Include="ErrorOr" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+		<PackageReference Include="Microsoft.CodeAnalysis.Common" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+		<PackageReference Include="Ulid" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\Common\Modular.Common\Modular.Common.csproj" />
+	</ItemGroup>
+
+	<!--<ItemGroup>
+		<Content Include="appsettings.Development.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</Content>
+		<Content Include="appsettings.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</Content>
+	</ItemGroup>-->
 
 </Project>

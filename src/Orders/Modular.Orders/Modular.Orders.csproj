@@ -2,8 +2,17 @@
 
 	<ItemGroup>
 		<Folder Include="Create\" />
-		<Folder Include="Cancel\" />
 		<Folder Include="Change\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="MediatR" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" />
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\Common\Modular.Common\Modular.Common.csproj" />
 	</ItemGroup>
 
 </Project>

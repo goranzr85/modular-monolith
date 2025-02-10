@@ -1,10 +1,12 @@
 ﻿using Carter;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 
 namespace Modular.Customers.Get;
 public sealed class GetCustomerEndpoint : ICarterModule
 {
-
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapGet("/api/customers/id", async (Guid id, CustomerDbContext customerDbContext, CancellationToken cancellationToken) =>
@@ -22,10 +24,10 @@ public sealed class GetCustomerEndpoint : ICarterModule
 
             return Results.Ok(customer);
         })
-        .WithName("GetCustomer")
-        .WithTags("Customers")
-        .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status200OK);
+       .WithName("GetCustomer")
+       .WithTags("Customers")
+       .Produces(StatusCodes.Status404NotFound)
+       .Produces(StatusCodes.Status200OK);
 
         app.MapGet("/api/customers", async (CustomerDbContext customerDbContext, CancellationToken cancellationToken) =>
         {

@@ -1,11 +1,13 @@
 ﻿using Carter;
 using ErrorOr;
 using MediatR;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 
 namespace Modular.Customers.Delete;
 public sealed class DeleteCustomerEndpoint : ICarterModule
 {
-
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapDelete("/api/customers/id", async (Guid id, ISender sender, CancellationToken cancellationToken) =>

@@ -20,7 +20,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Catalog\Modular.Catalog.Infrastructure\Modular.Catalog.Infrastructure.csproj" />
-		<ProjectReference Include="..\Customers\Modular.Customers1\Modular.Customers.csproj" />
+		<ProjectReference Include="..\Customers\Modular.Customers\Modular.Customers.csproj" />
 		<ProjectReference Include="..\Warehouse\Modular.Warehouse\Modular.Warehouse.csproj" />
 	</ItemGroup>
 

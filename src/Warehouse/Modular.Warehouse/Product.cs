@@ -1,5 +1,6 @@
 ﻿using ErrorOr;
 using MediatR;
+using Modular.Warehouse.Errors;
 
 namespace Modular.Warehouse;
 
@@ -17,7 +18,7 @@ internal sealed class Product
     {
         if (Quantity < quantity)
         {
-            return Error.Failure("Product.Quantity", "Not enough quantity of product.");
+            return ProductErrors.NotEnoughQuantity();
         }
 
         Quantity -= quantity;
