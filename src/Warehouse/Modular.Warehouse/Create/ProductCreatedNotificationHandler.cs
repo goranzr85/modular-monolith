@@ -1,10 +1,13 @@
-﻿using MediatR;
+﻿using MassTransit;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Modular.ProductIntegrationEvents;
+using Modular.Catalog.IntegrationEvents;
+using System.Threading;
 
 namespace Modular.Warehouse.Create;
-internal class ProductCreatedNotificationHandler : INotificationHandler<ProductCreatedIntegrationEvent>
+
+internal sealed class ProductCreatedNotificationHandler : IConsumer<ProductCreatedIntegrationEvent>
 {
     private readonly WarehouseDbContext _warehouseDbContext;
     private readonly ILogger<ProductCreatedNotificationHandler> _logger;
@@ -15,20 +18,23 @@ internal class ProductCreatedNotificationHandler : INotificationHandler<ProductC
         _logger = logger;
     }
 
-    public async Task Handle(ProductCreatedIntegrationEvent notification, CancellationToken cancellationToken)
+    public async Task Consume(ConsumeContext<ProductCreatedIntegrationEvent> context)
     {
+        ProductCreatedIntegrationEvent productCreatedEvent = context.Message;
+
         Product? product = await _warehouseDbContext.Products
-            .FirstOrDefaultAsync(p => p.Sku == notification.Sku, cancellationToken);
+            .FirstOrDefaultAsync(p => p.Sku == productCreatedEvent.Sku, CancellationToken.None);
 
         if (product is not null)
         {
-            _logger.LogWarning("Product with SKU: {Sku} already exists", notification.Sku);
+            _logger.LogWarning("Product with SKU: {Sku} already exists", productCreatedEvent.Sku);
             return;
         }
 
-        product = Product.Create(notification.Sku);
+        product = Product.Create(productCreatedEvent.Sku);
 
-        await _warehouseDbContext.AddAsync(product, cancellationToken);
-        await _warehouseDbContext.SaveChangesAsync(cancellationToken);
+        await _warehouseDbContext.AddAsync(product, CancellationToken.None);
+        await _warehouseDbContext.SaveChangesAsync(CancellationToken.None);
     }
+
 }
