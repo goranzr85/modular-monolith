@@ -1,18 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<ItemGroup>
-		<Folder Include="Create\" />
-		<Folder Include="Change\" />
-	</ItemGroup>
-
-	<ItemGroup>
+		<PackageReference Include="MassTransit" />
+		<PackageReference Include="MassTransit.RabbitMQ" />
 		<PackageReference Include="MediatR" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" />
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+		<PackageReference Include="Carter" />
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\Catalog\Modular.ProductIntegrationEvents\Modular.Catalog.IntegrationEvents.csproj" />
 		<ProjectReference Include="..\..\Common\Modular.Common\Modular.Common.csproj" />
+		<ProjectReference Include="..\Modular.Orders.IntegrationEvents\Modular.Orders.IntegrationEvents.csproj" />
 	</ItemGroup>
 
 </Project>

@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<ItemGroup>
+		<PackageReference Include="MassTransit.AspNetCore" />
+		<PackageReference Include="MassTransit.RabbitMQ" />
+		<PackageReference Include="MediatR" />
+		<PackageReference Include="Newtonsoft.Json" />
+		<PackageReference Include="Quartz" />
+		<PackageReference Include="Quartz.Extensions.Hosting" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\Common\Modular.Common\Modular.Common.csproj" />
+		<ProjectReference Include="..\Modular.Orders\Modular.Orders.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Update="SonarAnalyzer.CSharp">
+	    <PrivateAssets>all</PrivateAssets>
+	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	  </PackageReference>
+	</ItemGroup>
+
+</Project>

@@ -1,6 +1,6 @@
 ﻿using Modular.Common;
 
-namespace Modular.Orders;
+namespace Modular.Orders.Models;
 
 public class Product
 {
@@ -55,6 +55,7 @@ public class Product
         {
             throw new InvalidOperationException("Insufficient stock quantity.");
         }
+
         StockQuantity -= quantity;
     }
 
@@ -64,6 +65,7 @@ public class Product
         {
             throw new ArgumentException("Price cannot be less than or equal to zero.", nameof(price));
         }
+
         Price = price;
     }
 

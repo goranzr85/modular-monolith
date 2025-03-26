@@ -1,9 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Modular.Common;
+using Modular.Orders.Models;
 
 namespace Modular.Orders;
-internal sealed class OrderDbContext : DbContext
+public sealed class OrderDbContext : DbContext
 {
     internal static readonly string Schema = "Orders";
 
@@ -11,16 +12,21 @@ internal sealed class OrderDbContext : DbContext
     {
     }
 
-    public DbSet<Order> Products { get; set; }
+    public DbSet<Order> Orders { get; set; }
+    public DbSet<Product> Products { get; set; }
     public DbSet<OutboxMessage> OutboxMessages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
 
+        var priceConverter = new ValueConverter<Price, decimal>(
+            price => (decimal)price,
+            value => Price.Create(value));
+
         modelBuilder.Entity<Order>(builder =>
         {
-            builder.HasKey(c => c.OrderId);
+            builder.HasKey(c => c.Id);
 
             builder.Property(c => c.OrderDate)
                 .IsRequired();
@@ -33,7 +39,8 @@ internal sealed class OrderDbContext : DbContext
                 .HasForeignKey(i => i.OrderId);
 
             builder.Property(c => c.TotalAmount)
-                .IsRequired();
+               .HasConversion(priceConverter)
+               .IsRequired();
 
             builder.Property(c => c.CustomerId)
                 .IsRequired();
@@ -44,10 +51,6 @@ internal sealed class OrderDbContext : DbContext
 
             builder.ToTable("Orders");
         });
-
-        var priceConverter = new ValueConverter<Price, decimal>(
-             price => (decimal)price,
-             value => Price.Create(value));
 
         modelBuilder.Entity<Product>(builder =>
         {
