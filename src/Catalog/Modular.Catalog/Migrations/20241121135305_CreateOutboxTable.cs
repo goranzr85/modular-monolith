@@ -59,20 +59,6 @@ namespace Modular.Catalog.Migrations
                 name: "PK_Products",
                 schema: "Catalogs",
                 table: "Products");
-
-            migrationBuilder.AddColumn<Guid>(
-                name: "Id",
-                schema: "Catalogs",
-                table: "Products",
-                type: "uuid",
-                nullable: false,
-                defaultValue: new Guid("00000000-0000-0000-0000-000000000000"));
-
-            migrationBuilder.AddPrimaryKey(
-                name: "PK_Products",
-                schema: "Catalogs",
-                table: "Products",
-                column: "Id");
         }
     }
 }

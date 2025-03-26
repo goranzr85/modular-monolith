@@ -1,9 +1,6 @@
-﻿using MediatR;
-using Modular.Common;
+﻿using Modular.Common;
 
-namespace Modular.ProductIntegrationEvents;
+namespace Modular.Catalog.IntegrationEvents;
 
-public class ProductCreatedIntegrationEvent : INotification, IntegrationEvent
-{
-    public string Sku { get; init; }
-}
+public sealed record ProductCreatedIntegrationEvent(string Sku, string Name, string Description, Price Price) : IIntegrationEvent;
+

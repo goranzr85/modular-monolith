@@ -1,7 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<ItemGroup>
+		<PackageReference Include="MassTransit.AspNetCore" />
+		<PackageReference Include="MassTransit.RabbitMQ" />
 		<PackageReference Include="MediatR" />
+		<PackageReference Include="Microsoft.Extensions.Resilience" />
 		<PackageReference Include="Newtonsoft.Json" />
 		<PackageReference Include="Quartz" />
 		<PackageReference Include="Quartz.Extensions.Hosting" />

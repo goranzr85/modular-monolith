@@ -1,8 +1,9 @@
-﻿using MediatR;
+﻿using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Modular.Common;
 using Newtonsoft.Json;
+using Polly.Registry;
 using Quartz;
 
 namespace Modular.Catalog.Infrastructure.BackgroundJobs;
@@ -10,20 +11,19 @@ namespace Modular.Catalog.Infrastructure.BackgroundJobs;
 [DisallowConcurrentExecution]
 public sealed class ProcessOutboxMessagesJob : IJob
 {
-    // TODO: add polly to try again 
-    // TODO: use masstransit and rabbitmq for publishing events
-
     private readonly CatalogDbContext _catalogDbContext;
-    private readonly IPublisher _publisher;
     private readonly ILogger<ProcessOutboxMessagesJob> _logger;
+    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly ResiliencePipelineProvider<string> _pipelineProvider;
 
-    public ProcessOutboxMessagesJob(CatalogDbContext catalogDbContext, IPublisher publisher, ILogger<ProcessOutboxMessagesJob> logger)
+    public ProcessOutboxMessagesJob(CatalogDbContext catalogDbContext, ILogger<ProcessOutboxMessagesJob> logger,
+        IPublishEndpoint publishEndpoint, ResiliencePipelineProvider<string> pipelineProvider)
     {
         _catalogDbContext = catalogDbContext;
-        _publisher = publisher;
         _logger = logger;
+        _publishEndpoint = publishEndpoint;
+        _pipelineProvider = pipelineProvider;
     }
-
 
     public async Task Execute(IJobExecutionContext context)
     {
@@ -34,16 +34,25 @@ public sealed class ProcessOutboxMessagesJob : IJob
 
         foreach (OutboxMessage? outboxMessage in outboxMessages)
         {
-            IntegrationEvent? integrationEvent = JsonConvert.DeserializeObject<IntegrationEvent>(outboxMessage.Content,
-                new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All });
+            var domainEvent = JsonConvert.DeserializeObject(outboxMessage.Content, new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.All
+            });
 
-            if (integrationEvent is null)
+            if (domainEvent is null)
             {
                 _logger.LogError("Failed to deserialize integration event: {@OutboxMessage}", outboxMessage);
                 continue;
             }
 
-            await _publisher.Publish(integrationEvent);
+            var integrationEvent = DomainToIntegrationEventConverter.Convert((IDomainEvent)domainEvent);
+
+            var pipeline = _pipelineProvider.GetPipeline(Constants.ResiliencePipelineName);
+
+            await pipeline.ExecuteAsync(async ct =>
+            {
+                await _publishEndpoint.Publish(integrationEvent, CancellationToken.None);
+            });
 
             outboxMessage!.ProcessedOnUtc = DateTime.UtcNow;
         }

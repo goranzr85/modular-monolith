@@ -23,7 +23,7 @@ internal sealed class EventsToOutboxMessagesInterceptors : SaveChangesIntercepto
             .Select(x => x.Entity)
             .SelectMany(x =>
             {
-                IReadOnlyCollection<IntegrationEvent> events = x.GetEvents();
+                IReadOnlyCollection<IDomainEvent> events = x.GetEvents();
 
                 x.ClearEvents();
 

@@ -50,7 +50,7 @@ internal sealed class CreateProductCommandHandler : IRequestHandler<CreateProduc
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Creating product failed");
+            _logger.LogError(ex, "Creating product {@Product} failed.", request);
             return ProductErrors.ProductNotCreated(request.Sku);
         }
     }

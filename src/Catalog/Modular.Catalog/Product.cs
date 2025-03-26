@@ -1,7 +1,7 @@
 ﻿using ErrorOr;
+using Modular.Catalog.Create.DomainEvents;
 using Modular.Catalog.Errors;
 using Modular.Common;
-using Modular.ProductIntegrationEvents;
 
 namespace Modular.Catalog;
 
@@ -44,10 +44,8 @@ public sealed class Product : AggregateRoot
 
         var product = new Product(sku, name, description, price);
 
-        product.RaiseEvent(new ProductCreatedIntegrationEvent
-        {
-            Sku = sku
-        });
+        product.RaiseEvent(new ProductCreated(sku, name, description, price));
+
 
         return product;
     }
