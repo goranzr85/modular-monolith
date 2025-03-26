@@ -2,18 +2,18 @@
 
 public abstract class AggregateRoot
 {
-    private readonly List<IntegrationEvent> _integrationEvents = new();
+    private readonly List<IDomainEvent> _domainEvents = new();
 
-    protected void RaiseEvent(IntegrationEvent @event)
+    protected void RaiseEvent(IDomainEvent @event)
     {
-        _integrationEvents.Add(@event);
+        _domainEvents.Add(@event);
     }
 
-    public IReadOnlyCollection<IntegrationEvent> GetEvents() => _integrationEvents.ToList();
+    public IReadOnlyCollection<IDomainEvent> GetEvents() => _domainEvents.ToList();
 
     public void ClearEvents()
     {
-        _integrationEvents.Clear();
+        _domainEvents.Clear();
     }
 
 }
