@@ -5,6 +5,7 @@ using Modular.Catalog.Infrastructure;
 using Modular.Customers;
 using Modular.Orders;
 using Modular.Warehouse;
+using Modular.WebApi.MIddlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,8 @@ builder.Services
 builder.Services.RegisterOrderModule(builder.Configuration);
 builder.Services.AddWarehouse(builder.Configuration);
 builder.Services.AddCarter();
+builder.Services.AddExceptionHandler<CustomExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddMassTransit(mt =>
 {
@@ -65,6 +68,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseExceptionHandler();
 app.UseHttpsRedirection();
 app.MapCarter();
 
