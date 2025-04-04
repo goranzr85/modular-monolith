@@ -1,17 +1,21 @@
-﻿using Modular.Common;
+﻿using MediatR;
+using Modular.Common;
 using Modular.Orders.Cancel;
 using Modular.Orders.Change;
 using Modular.Orders.Change.AddProducts;
 using Modular.Orders.Change.ChangeProductQuantity;
+using Modular.Orders.Change.ChangeProductQuantity.Decrease;
+using Modular.Orders.Change.ChangeProductQuantity.Increase;
 using Modular.Orders.Change.RemoveProducts;
 using Modular.Orders.Create;
+using Modular.Orders.Errors;
 
 namespace Modular.Orders.Models;
 
 public sealed class Order : AggregateRoot
 {
     public Guid Id { get; private set; }
-    public DateTime OrderDate { get; private set; }
+    public DateTimeOffset OrderDate { get; private set; }
     public Guid CustomerId { get; private set; }
     public Price TotalAmount { get; private set; }
     public List<OrderItem> Items { get; private set; }
@@ -22,7 +26,7 @@ public sealed class Order : AggregateRoot
         Items = new List<OrderItem>();
     }
 
-    internal static Order Create(Guid orderId, DateTime orderDate, Guid customerId, List<OrderItem> items)
+    internal static Order Create(Guid orderId, DateTimeOffset orderDate, Guid customerId, List<OrderItem> items)
     {
         if (orderId == default)
         {
@@ -79,17 +83,43 @@ public sealed class Order : AggregateRoot
             return;
         }
 
-        if (existingOrderItem.Quantity < quantity)
+        existingOrderItem.IncreaseQuantity(quantity - existingOrderItem.Quantity);
+        RaiseEvent(new IncreasedProductQuantityInOrderEvent(Id, existingOrderItem.ProductId, existingOrderItem.Quantity));
+    }
+
+    internal ErrorOr.ErrorOr<Unit> IncreaseQuantity(int productId, uint quantity)
+    {
+        OrderItem? existingOrderItem = Items.FirstOrDefault(i => i.ProductId == productId);
+
+        if (existingOrderItem is null)
         {
-            existingOrderItem.IncreaseQuantity(quantity - existingOrderItem.Quantity);
-            RaiseEvent(new IncreasedProductQuantity(Id, existingOrderItem.ProductId, existingOrderItem.Quantity));
-        }
-        else if (existingOrderItem.Quantity > quantity)
-        {
-            existingOrderItem.DecreaseQuantity(existingOrderItem.Quantity - quantity);
-            RaiseEvent(new DecreasedProductQuantity(Id, existingOrderItem.ProductId, existingOrderItem.Quantity));
+            return OrderErrors.ProductIsNotPlaced(Id, productId);
         }
 
+        existingOrderItem.IncreaseQuantity(quantity + existingOrderItem.Quantity);
+        RaiseEvent(new IncreasedProductQuantityInOrderEvent(Id, existingOrderItem.ProductId, existingOrderItem.Quantity));
+
+        return Unit.Value;
+    }
+
+    internal ErrorOr.ErrorOr<Unit> DecreaseQuantity(int productId, uint quantity)
+    {
+        OrderItem? existingOrderItem = Items.FirstOrDefault(i => i.ProductId == productId);
+
+        if (existingOrderItem is null)
+        {
+            return OrderErrors.ProductIsNotPlaced(Id, productId);
+        }
+
+        if (existingOrderItem.Quantity < quantity)
+        {
+            return OrderErrors.ProductQuantityIsNotEnoughForDecrease(Id, productId, quantity);
+        }
+
+        existingOrderItem.DecreaseQuantity(existingOrderItem.Quantity - quantity);
+        RaiseEvent(new DecreasedProductQuantityInOrderEvent(Id, existingOrderItem.ProductId, existingOrderItem.Quantity));
+
+        return Unit.Value;
     }
 
     internal void RemoveItem(int productId)

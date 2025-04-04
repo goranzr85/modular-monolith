@@ -5,19 +5,13 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Modular.Common;
-using Modular.Orders.Change.AddProducts;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Modular.Orders.Cancel;
 public sealed class CancelOrderEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/orders/{orderId: guid}", async (Guid orderId, ISender sender, CancellationToken cancellationToken) =>
+        app.MapPost("/api/orders/cancel/{orderId:guid}", async (Guid orderId, ISender sender, CancellationToken cancellationToken) =>
         {
             CancelOrderCommand command = new(orderId);
 
