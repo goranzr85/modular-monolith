@@ -5,21 +5,15 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Modular.Common;
-using Modular.Orders.Change.AddProducts;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Modular.Orders.Change.ChangeProductQuantity;
+namespace Modular.Orders.Change.ChangeProductQuantity.Decrease;
 public sealed class DecreaseProductQuantityEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/orders/{orderId: guid}/add", async (Guid orderId, AddProductToOrderRequest request, ISender sender, CancellationToken cancellationToken) =>
+        app.MapPost("/api/orders/{orderId:guid}/decrease-quantity", async (Guid orderId, DecreaseProductQuantityRequest request, ISender sender, CancellationToken cancellationToken) =>
         {
-            AddProductCommand command = new(orderId, request.ProductId, request.Quantity, request.Price);
+            DecreaseProductQuantityCommand command = new(orderId, request.ProductId, request.Quantity);
 
             ErrorOr<Unit> response = await sender.Send(command, cancellationToken);
 
