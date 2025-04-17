@@ -11,7 +11,7 @@ public sealed class AddProductToOrderEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/orders/{orderId:guid}/add", async (Guid orderId, AddProductToOrderRequest request, ISender sender, CancellationToken cancellationToken) =>
+        app.MapPost("/api/orders/add/{orderId:guid}", async (Guid orderId, AddProductToOrderRequest request, ISender sender, CancellationToken cancellationToken) =>
         {
             AddProductCommand command = new(orderId, request.ProductId, request.Quantity, request.Price);
 

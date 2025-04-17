@@ -11,7 +11,7 @@ public sealed class RemoveProductFromOrderEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/orders/{orderId:guid}/remove", async (Guid orderId, RemoveProductFromOrderRequest request, ISender sender, CancellationToken cancellationToken) =>
+        app.MapPost("/api/orders/remove/{orderId:guid}", async (Guid orderId, RemoveProductFromOrderRequest request, ISender sender, CancellationToken cancellationToken) =>
         {
             RemoveProductCommand command = new(orderId, request.ProductId);
 

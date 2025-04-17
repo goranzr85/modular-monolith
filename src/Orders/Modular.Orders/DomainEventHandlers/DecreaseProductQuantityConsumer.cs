@@ -3,13 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Modular.Orders.Change.AddProducts;
 using Modular.Orders.Change.ChangeProductQuantity.Decrease;
-using Modular.Orders.Change.ChangeProductQuantity.Increase;
 using Modular.Orders.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Modular.Orders.DomainEventHandlers;
 
@@ -52,11 +46,10 @@ internal sealed class DecreaseProductQuantityConsumer : IConsumer<OrderItemAdded
 
             await transaction.CommitAsync();
         }
-
-        catch (Exception)
+        catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            _logger.LogError("An error occurred while decreasing product quantity for product {ProductId} by {Quantity}.", productId, quantity);
+            _logger.LogError(ex, "An error occurred while decreasing product quantity for product {ProductId} by {Quantity}.", productId, quantity);
         }
     }
 

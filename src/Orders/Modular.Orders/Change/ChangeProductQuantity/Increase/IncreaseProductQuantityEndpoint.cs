@@ -12,7 +12,7 @@ public sealed class IncreaseProductQuantityEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/orders/{orderId:guid}/increase-quantity", async (Guid orderId, IncreaseProductQuantityRequest request, ISender sender, CancellationToken cancellationToken) =>
+        app.MapPost("/api/orders/increase-quantity/{orderId:guid}", async (Guid orderId, IncreaseProductQuantityRequest request, ISender sender, CancellationToken cancellationToken) =>
         {
             DecreaseProductQuantityCommand command = new(orderId, request.ProductId, request.Quantity);
 

@@ -17,11 +17,11 @@ public sealed class CreateOrderEndpoint : ICarterModule
             Guid orderId = Ulid.NewUlid().ToGuid();
             CreateOrderCommand command = new(orderId, OrderDate: dateTimeProvider.GetUtcNow(), createOrderRequest.CustomerId, createOrderRequest.Items);
 
-            ErrorOr<Unit> response = await sender.Send(command, cancellationToken);
+            ErrorOr<Guid> response = await sender.Send(command, cancellationToken);
 
-            return response.ToResult(_ => Results.NoContent());
+            return response.ToResult((orderId) => Results.Created($"/api/orders/{orderId}", orderId));
         })
-       .WithName("CancelOrder")
+       .WithName("CreateOrder")
        .WithTags("Orders")
        .Produces(StatusCodes.Status400BadRequest)
        .Produces(StatusCodes.Status500InternalServerError)
