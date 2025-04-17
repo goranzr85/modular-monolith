@@ -1,20 +1,42 @@
 ﻿using ErrorOr;
+using Marten.Schema;
 using MediatR;
 using Modular.Warehouse.Errors;
+using Modular.Warehouse.SourceModels;
 
 namespace Modular.Warehouse;
 
-internal sealed class Product
+public sealed class Product
 {
-    public string Sku { get; internal init; }
-    public uint Quantity { get; private set; }
+    [Identity]
+    public string Sku { get; set; }
+    public string Name { get; set; }
+    public uint Quantity { get; set; }
+    public bool IsDelisted { get; set; }
 
-    internal void IncreaseQuantity(uint quantity)
+    public void Apply(ProductCreated productCreated)
     {
-        Quantity += quantity;
+        Sku = productCreated.Sku;
+        Name = productCreated.Name;
+        Quantity = 0;
     }
 
-    internal ErrorOr<Unit> DecreaseQuantity(uint quantity)
+    public void Apply(ProductReceived productReceived)
+    {
+        Quantity += productReceived.Quantity;
+    }
+
+    public void Apply(ProductShipped productShipped)
+    {
+        DecreaseQuantity(productShipped.Quantity);
+    }
+
+    public void Apply(ProductDelisted productDelisted)
+    {
+        IsDelisted = true;
+    }
+
+    public ErrorOr<Unit> DecreaseQuantity(uint quantity)
     {
         if (Quantity < quantity)
         {
@@ -26,12 +48,4 @@ internal sealed class Product
         return Unit.Value;
     }
 
-    internal static Product Create(string sku)
-    {
-        return new Product
-        {
-            Sku = sku,
-            Quantity = 0
-        };
-    }
 }

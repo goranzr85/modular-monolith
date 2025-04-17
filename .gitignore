@@ -328,3 +328,4 @@ ASALocalRun/
 test_results/
 /.aws
 
+/to_support_list.txt

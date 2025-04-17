@@ -1,40 +1,44 @@
-﻿using MassTransit;
-using MediatR;
-using Microsoft.EntityFrameworkCore;
+﻿using Marten;
+using MassTransit;
 using Microsoft.Extensions.Logging;
 using Modular.Catalog.IntegrationEvents;
-using System.Threading;
+using Modular.Warehouse.SourceModels;
 
 namespace Modular.Warehouse.Create;
 
 internal sealed class ProductCreatedNotificationHandler : IConsumer<ProductCreatedIntegrationEvent>
 {
-    private readonly WarehouseDbContext _warehouseDbContext;
+    private readonly IDocumentStore _documentStore;
+    private readonly TimeProvider _dateTimeProvider;
     private readonly ILogger<ProductCreatedNotificationHandler> _logger;
 
-    public ProductCreatedNotificationHandler(WarehouseDbContext warehouseDbContext, ILogger<ProductCreatedNotificationHandler> logger)
+    public ProductCreatedNotificationHandler(IDocumentStore documentStore, ILogger<ProductCreatedNotificationHandler> logger, TimeProvider dateTimeProvider)
     {
-        _warehouseDbContext = warehouseDbContext;
+        _documentStore = documentStore;
         _logger = logger;
+        _dateTimeProvider = dateTimeProvider;
     }
 
     public async Task Consume(ConsumeContext<ProductCreatedIntegrationEvent> context)
     {
-        ProductCreatedIntegrationEvent productCreatedEvent = context.Message;
+        string sku = context.Message.Sku;
+        _logger.LogInformation("Creating product {Sku}.", sku);
 
-        Product? product = await _warehouseDbContext.Products
-            .FirstOrDefaultAsync(p => p.Sku == productCreatedEvent.Sku, CancellationToken.None);
+        await using var session = _documentStore.LightweightSession();
+        Product? product = await session.Events.AggregateStreamAsync<Product>(sku);
 
         if (product is not null)
         {
-            _logger.LogWarning("Product with SKU: {Sku} already exists", productCreatedEvent.Sku);
+            _logger.LogWarning("Product with SKU: {Sku} already exists.", sku);
             return;
         }
 
-        product = Product.Create(productCreatedEvent.Sku);
+        ProductCreated productCreated = new(sku, context.Message.Name, _dateTimeProvider.GetUtcNow());
+        session.Events.StartStream<Product>(sku, productCreated);
+        await session.SaveChangesAsync();
 
-        await _warehouseDbContext.AddAsync(product, CancellationToken.None);
-        await _warehouseDbContext.SaveChangesAsync(CancellationToken.None);
+        _logger.LogDebug("Creating product {Sku} succeeded.", sku);
+
     }
 
 }
