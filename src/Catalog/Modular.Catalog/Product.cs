@@ -46,7 +46,6 @@ public sealed class Product : AggregateRoot
 
         product.RaiseEvent(new ProductCreated(sku, name, description, price));
 
-
         return product;
     }
 

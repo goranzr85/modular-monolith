@@ -1,22 +1,14 @@
 ﻿namespace Modular.Common;
-public class Price
+public record Price(decimal Value)
 {
-    private decimal _value;
-
-    private Price()
-    {
-    }
-
     public static Price Create(decimal value)
     {
-        if (value <= 0)
-        {
-            throw new ArgumentException("Price cannot be less than or equal to zero.", nameof(value));
-        }
+        if (value < 0)
+            throw new ArgumentException("Price cannot be negative.", nameof(value));
 
-        return new Price { _value = value };
+        return new Price(value);
     }
 
-    public static implicit operator decimal(Price price) => price._value;
-
+    public static implicit operator decimal(Price price) => price.Value;
 }
+

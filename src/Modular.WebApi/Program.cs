@@ -1,4 +1,5 @@
 using Carter;
+using Marten;
 using MassTransit;
 using Modular.Catalog;
 using Modular.Catalog.Infrastructure;
@@ -21,11 +22,20 @@ builder.Services.AddWarehouse(builder.Configuration);
 builder.Services.AddCarter();
 builder.Services.AddExceptionHandler<CustomExceptionHandler>();
 builder.Services.AddProblemDetails();
+builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
+
+
 
 builder.Services.AddMassTransit(mt =>
 {
     mt.SetKebabCaseEndpointNameFormatter();
     mt.AddOrderConsumers();
+    mt.AddWarehouseConsumers();
+
+    mt.AddConfigureEndpointsCallback((context, name, cfg) =>
+    {
+        cfg.UseMessageRetry(r => r.Immediate(5));
+    });
 
     mt.UsingRabbitMq((context, cfg) =>
     {
@@ -38,6 +48,7 @@ builder.Services.AddMassTransit(mt =>
         //cfg.ConfigureEndpoints(context);
 
         cfg.ReceiveOrderEndpoints(context);
+        cfg.WarehouseEndpoints(context);
     });
 
 

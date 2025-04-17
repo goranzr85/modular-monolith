@@ -35,10 +35,16 @@ public static class ServiceRegistration
         {
             e.ConfigureConsumer<ProductCreatedEventHandler>(context);
         });
+
+        configurator.ReceiveEndpoint("order-product-received-queue", e =>
+        {
+            e.ConfigureConsumer<ProductReceivedEventHandler>(context);
+        });
     }
 
     public static void AddOrderConsumers(this IBusRegistrationConfigurator brc)
     {
         brc.AddConsumer<ProductCreatedEventHandler>();
+        brc.AddConsumer<ProductReceivedEventHandler>();
     }
 }
