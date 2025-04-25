@@ -3,7 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Modular.Customers.Models;
 
-namespace Modular.Customers.Delete;
+namespace Modular.Customers.UseCases.Delete;
 
 internal sealed record DeleteCustomerCommand(Guid CustomerId) : IRequest<ErrorOr<Unit>>
 {

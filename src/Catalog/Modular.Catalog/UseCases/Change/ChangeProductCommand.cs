@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Modular.Catalog.Errors;
 using Modular.Common;
 
-namespace Modular.Catalog.Change;
+namespace Modular.Catalog.UseCases.Change;
 
 internal sealed class ChangeProductCommandValidator : AbstractValidator<ChangeProductCommand>
 {

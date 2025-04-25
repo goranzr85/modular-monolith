@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Modular.Common;
 
-namespace Modular.Customers.Change;
+namespace Modular.Customers.UseCases.Change;
 public sealed class ChangeAddressEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)

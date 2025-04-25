@@ -3,7 +3,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using Modular.Customers.Models;
 
-namespace Modular.Customers.Create;
+namespace Modular.Customers.UseCases.Create;
 
 internal sealed record CreateCustomerCommand(string FirstName, string? MiddleName, string LastName,
 AddressDto Address, AddressDto? ShippingAddress, string? Email, string? Phone) : IRequest<ErrorOr<CreateCustomerResponse>>

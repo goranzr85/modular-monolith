@@ -1,9 +1,9 @@
 ﻿using FluentValidation;
 using Modular.Customers.Configuration;
 
-namespace Modular.Customers.Create;
+namespace Modular.Customers.UseCases.Change;
 
-internal sealed class ChangeCustomerCommandValidator : AbstractValidator<CreateCustomerCommand>
+internal sealed class ChangeCustomerCommandValidator : AbstractValidator<ChangeCustomerCommand>
 {
     public ChangeCustomerCommandValidator()
     {

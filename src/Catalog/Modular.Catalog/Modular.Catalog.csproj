@@ -17,5 +17,9 @@
 	  <ProjectReference Include="..\Modular.ProductIntegrationEvents\Modular.Catalog.IntegrationEvents.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="UseCases\Delisted\" />
+	</ItemGroup>
+
 
 </Project>

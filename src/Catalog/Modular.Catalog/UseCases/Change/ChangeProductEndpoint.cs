@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Modular.Common;
 
-namespace Modular.Catalog.Change;
+namespace Modular.Catalog.UseCases.Change;
 public sealed class ChangeProductEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)

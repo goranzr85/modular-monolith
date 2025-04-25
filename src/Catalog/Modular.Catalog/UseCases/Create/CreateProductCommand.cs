@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using Modular.Catalog.Errors;
 using Modular.Common;
 
-namespace Modular.Catalog.Create;
+namespace Modular.Catalog.UseCases.Create;
 
 internal sealed record CreateProductCommand(string Sku, string Name, string Description, decimal Price) : IRequest<ErrorOr<Unit>>
 {

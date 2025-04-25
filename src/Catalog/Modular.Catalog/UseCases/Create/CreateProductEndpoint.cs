@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Modular.Common;
 
-namespace Modular.Catalog.Create;
+namespace Modular.Catalog.UseCases.Create;
 public sealed class CreateProductEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
