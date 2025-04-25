@@ -4,7 +4,7 @@ using MediatR;
 using Modular.Warehouse.Errors;
 using Modular.Warehouse.SourceModels;
 
-namespace Modular.Warehouse;
+namespace Modular.Warehouse.Models;
 
 public sealed class Product
 {
@@ -25,10 +25,20 @@ public sealed class Product
     {
         Quantity += productReceived.Quantity;
     }
+    
+    public void Apply(IncreasedProductQuantity productQuantityIncreased)
+    {
+        Quantity += productQuantityIncreased.Quantity;
+    }
 
     public void Apply(ProductShipped productShipped)
     {
         DecreaseQuantity(productShipped.Quantity);
+    }
+    
+    public void Apply(DecreasedProductQuantity decreasedProductQuantity)
+    {
+        DecreaseQuantity(decreasedProductQuantity.Quantity);
     }
 
     public void Apply(ProductDelisted productDelisted)

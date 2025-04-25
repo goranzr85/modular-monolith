@@ -1,27 +1,31 @@
 ﻿using ErrorOr;
 using Marten;
+using MassTransit;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Modular.Warehouse.Errors;
+using Modular.Warehouse.IntegrationEvents;
+using Modular.Warehouse.Models;
 using Modular.Warehouse.SourceModels;
 
-namespace Modular.Warehouse.Shipping;
+namespace Modular.Warehouse.UseCases.Products.Shipping;
 
-internal sealed record ProductShippingCommand(string Sku, uint Quantity) : IRequest<ErrorOr<Unit>>
-{
-}
+internal sealed record ProductShippingCommand(string Sku, uint Quantity, Guid OrderId) : IRequest<ErrorOr<Unit>>;
 
 internal sealed class ProductShippingCommandHandler : IRequestHandler<ProductShippingCommand, ErrorOr<Unit>>
 {
     private readonly IDocumentStore _documentStore;
+    private readonly IPublishEndpoint _publishEndpoint;
     private readonly TimeProvider _dateTimeProvider;
     private readonly ILogger<ProductShippingCommandHandler> _logger;
 
-    public ProductShippingCommandHandler(IDocumentStore documentStore, ILogger<ProductShippingCommandHandler> logger, TimeProvider dateTimeProvider)
+    public ProductShippingCommandHandler(IDocumentStore documentStore, ILogger<ProductShippingCommandHandler> logger, TimeProvider dateTimeProvider,
+        IPublishEndpoint publishEndpoint)
     {
         _documentStore = documentStore;
         _logger = logger;
         _dateTimeProvider = dateTimeProvider;
+        _publishEndpoint = publishEndpoint;
     }
 
     public async Task<ErrorOr<Unit>> Handle(ProductShippingCommand request, CancellationToken cancellationToken)
@@ -43,9 +47,12 @@ internal sealed class ProductShippingCommandHandler : IRequestHandler<ProductShi
             return ProductErrors.ProductDelisted(request.Sku);
         }
 
-        ProductShipped productShipped = new(request.Sku, request.Quantity, _dateTimeProvider.GetUtcNow());
+        DateTimeOffset occuredOnUtc = _dateTimeProvider.GetUtcNow();
+        ProductShipped productShipped = new(request.Sku, request.Quantity, occuredOnUtc);
         session.Events.Append(productShipped.Sku, productShipped);
         await session.SaveChangesAsync(cancellationToken);
+
+        await _publishEndpoint.Publish(new ProductShippedIntegrationEvent(request.Sku, request.Quantity, request.OrderId, occuredOnUtc), cancellationToken);
 
         _logger.LogDebug("Shipping product {Sku} with quantity {Quantity} succeeded.", request.Sku, request.Quantity);
         return Unit.Value;

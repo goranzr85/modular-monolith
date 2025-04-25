@@ -5,21 +5,22 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Modular.Common;
+using Modular.Warehouse.UseCases.Products.Adjusted;
 
-namespace Modular.Warehouse.Receiving;
-public sealed class ProductReceivingEndpoint : ICarterModule
+namespace Modular.Warehouse.UseCases.Products.Adjusted.Decreased;
+public sealed class ManualProductStockDecreasedEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/warehouse/received/{sku}", async (string sku, ProductReceivingRequest request, ISender sender, CancellationToken cancellationToken) =>
+        app.MapPost("/api/warehouse/decreased/{sku}", async (string sku, ProductAdjustedRequest request, ISender sender, CancellationToken cancellationToken) =>
         {
-            ProductReceivingCommand command = new(sku, request.Quantity);
+            ManualProductStockDecreaseCommand command = new(sku, request.Quantity, request.Reason);
 
             ErrorOr<Unit> response = await sender.Send(command, cancellationToken);
 
             return response.ToResult(_ => Results.NoContent());
         })
-        .WithName("ReceivedProduct")
+        .WithName("ManuallyDecreaseProduct")
         .WithTags("Warehouse")
         .Produces(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status500InternalServerError)

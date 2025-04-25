@@ -2,9 +2,10 @@
 using MassTransit;
 using Microsoft.Extensions.Logging;
 using Modular.Catalog.IntegrationEvents;
+using Modular.Warehouse.Models;
 using Modular.Warehouse.SourceModels;
 
-namespace Modular.Warehouse.Create;
+namespace Modular.Warehouse.UseCases.Products.Create;
 
 internal sealed class ProductCreatedNotificationHandler : IConsumer<ProductCreatedIntegrationEvent>
 {

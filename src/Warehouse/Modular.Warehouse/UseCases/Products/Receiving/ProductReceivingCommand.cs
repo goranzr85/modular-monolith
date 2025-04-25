@@ -5,13 +5,12 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using Modular.Warehouse.Errors;
 using Modular.Warehouse.IntegrationEvents;
+using Modular.Warehouse.Models;
 using Modular.Warehouse.SourceModels;
 
-namespace Modular.Warehouse.Receiving;
+namespace Modular.Warehouse.UseCases.Products.Receiving;
 
-internal sealed record ProductReceivingCommand(string Sku, uint Quantity) : IRequest<ErrorOr<Unit>>
-{
-}
+internal sealed record ProductReceivingCommand(string Sku, uint Quantity) : IRequest<ErrorOr<Unit>>;
 
 internal sealed class ProductReceivingCommandHandler : IRequestHandler<ProductReceivingCommand, ErrorOr<Unit>>
 {
@@ -48,7 +47,7 @@ internal sealed class ProductReceivingCommandHandler : IRequestHandler<ProductRe
         ProductReceived productReceived = new(request.Sku, request.Quantity, DateTime.UtcNow);
         session.Events.Append(productReceived.Sku, productReceived);
 
-        await _publishEndpoint.Publish(new ProductReceivedIntegrationEvent(request.Sku, request.Quantity), cancellationToken);
+        await _publishEndpoint.Publish(new ProductQuantityIncreasedInWarehouseIntegrationEvent(request.Sku, request.Quantity), cancellationToken);
 
         await session.SaveChangesAsync(cancellationToken);
 

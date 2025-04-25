@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Modular.Common;
 
 namespace Modular.Orders.IntegrationEvents;
-internal class ShipProduct
-{
-}
+public sealed record ShipProduct(Guid OrderId, (string ProductSku, uint Quantity)[] Products) : IIntegrationCommand;

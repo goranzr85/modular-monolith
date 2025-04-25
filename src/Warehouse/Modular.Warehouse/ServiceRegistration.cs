@@ -3,8 +3,9 @@ using Marten.Events;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Modular.Warehouse.Create;
+using Modular.Warehouse.UseCases.Products.Create;
 using Weasel.Core;
+using Microsoft.EntityFrameworkCore;
 
 namespace Modular.Warehouse;
 public static class ServiceRegistration
@@ -12,6 +13,17 @@ public static class ServiceRegistration
     public static IServiceCollection AddWarehouse(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(ServiceRegistration).Assembly));
+
+        string? connectionString = configuration.GetConnectionString("DefaultConnection");
+
+        services.AddDbContext<OrderDbContext>((sp, options) =>
+        {
+            options.UseNpgsql(connectionString, o =>
+            {
+                o.MigrationsHistoryTable("__EFMigrationsHistory", OrderDbContext.Schema);
+                o.MigrationsAssembly(typeof(OrderDbContext).Assembly.FullName);
+            });
+        });
 
         return services;
     }
@@ -34,6 +46,7 @@ public static class ServiceRegistration
             cfg.AutoCreateSchemaObjects = AutoCreate.All;
             cfg.UseSystemTextJsonForSerialization();
             cfg.Events.StreamIdentity = StreamIdentity.AsString;
+            cfg.DatabaseSchemaName = "Warehouse";
             cfg.Events.DatabaseSchemaName = "Warehouse";
         });
     }
