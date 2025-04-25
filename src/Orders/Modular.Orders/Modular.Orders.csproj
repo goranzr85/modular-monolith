@@ -17,4 +17,10 @@
 		<ProjectReference Include="..\Modular.Orders.IntegrationEvents\Modular.Orders.IntegrationEvents.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Migrations\" />
+	  <Folder Include="UseCases\Orders\Get\" />
+	  <Folder Include="UseCases\Products\Delisted\" />
+	</ItemGroup>
+
 </Project>

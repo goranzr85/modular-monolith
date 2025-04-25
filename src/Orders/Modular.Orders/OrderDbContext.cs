@@ -1,7 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Modular.Common;
-using Modular.Orders.Models;
+using Modular.Orders.UseCases.Common;
+using Modular.Orders.UseCases.Orders.Models;
 
 namespace Modular.Orders;
 public sealed class OrderDbContext : DbContext
@@ -83,6 +84,14 @@ public sealed class OrderDbContext : DbContext
             builder.Property(c => c.Price)
                 .HasConversion(priceConverter)
                 .IsRequired();
+
+            builder.ComplexProperty(c => c.ShippedStatus);
+
+            //builder.OwnsOne(o => o.ShippedStatus, navigationBuilder =>
+            //{
+            //    navigationBuilder.Property(s => s.IsShipped).HasColumnName("IsShipped");
+            //    navigationBuilder.Property(s => s.Date).HasColumnName("ShippedDate");
+            //});
 
             builder.ToTable("OrderItems");
         });
