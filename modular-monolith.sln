@@ -40,13 +40,23 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modular.Catalog", "src\Cata
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modular.Customers", "src\Customers\Modular.Customers\Modular.Customers.csproj", "{9BD990DA-40C2-4BFF-B2BC-8112492E8B73}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modular.Orders.IntegrationEvents", "src\Orders\Modular.Orders.IntegrationEvents\Modular.Orders.IntegrationEvents.csproj", "{0AFFB84F-8362-48A8-8607-F49DB59990E7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modular.Orders.Integrations", "src\Orders\Modular.Orders.IntegrationEvents\Modular.Orders.Integrations.csproj", "{0AFFB84F-8362-48A8-8607-F49DB59990E7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modular.Orders.Infrastructure", "src\Orders\Modular.Orders.Infrastructure\Modular.Orders.Infrastructure.csproj", "{764F8CE0-EF7F-432E-8FDF-F421A64589A9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modular.Warehouse.IntegrationEvents", "src\Warehouse\Modular.Warehouse.IntegrationEvents\Modular.Warehouse.IntegrationEvents.csproj", "{3E99FA9B-249C-42BD-B6B8-01BEF9FC4AA5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modular.Warehouse", "src\Warehouse\Modular.Warehouse\Modular.Warehouse.csproj", "{D2F6153B-1133-ED63-DCC9-B361235EC440}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modular.Payments", "src\Payments\Modular.Payments\Modular.Payments.csproj", "{549D8080-F9B5-4730-A558-6407E3CBD8DD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modular.Payments.IntegrationEvents", "src\Payments\Modular.Payments.IntegrationEvents\Modular.Payments.IntegrationEvents.csproj", "{8DB478D3-ACE7-4511-917C-7F457AE8A1A0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notifications", "Notifications", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modular.Notifications", "src\Notifications\Modular.Notifications\Modular.Notifications.csproj", "{3906FE2D-8464-4F9F-B553-798D596F6020}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modular.Customers.IntegrationEvents", "src\Customers\Modular.Customers.IntegrationEvents\Modular.Customers.IntegrationEvents.csproj", "{6E8436D5-B757-4B3E-AF8A-A482A8E6A544}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -98,6 +108,22 @@ Global
 		{D2F6153B-1133-ED63-DCC9-B361235EC440}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D2F6153B-1133-ED63-DCC9-B361235EC440}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D2F6153B-1133-ED63-DCC9-B361235EC440}.Release|Any CPU.Build.0 = Release|Any CPU
+		{549D8080-F9B5-4730-A558-6407E3CBD8DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{549D8080-F9B5-4730-A558-6407E3CBD8DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{549D8080-F9B5-4730-A558-6407E3CBD8DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{549D8080-F9B5-4730-A558-6407E3CBD8DD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8DB478D3-ACE7-4511-917C-7F457AE8A1A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8DB478D3-ACE7-4511-917C-7F457AE8A1A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8DB478D3-ACE7-4511-917C-7F457AE8A1A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8DB478D3-ACE7-4511-917C-7F457AE8A1A0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3906FE2D-8464-4F9F-B553-798D596F6020}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3906FE2D-8464-4F9F-B553-798D596F6020}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3906FE2D-8464-4F9F-B553-798D596F6020}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3906FE2D-8464-4F9F-B553-798D596F6020}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6E8436D5-B757-4B3E-AF8A-A482A8E6A544}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E8436D5-B757-4B3E-AF8A-A482A8E6A544}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E8436D5-B757-4B3E-AF8A-A482A8E6A544}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E8436D5-B757-4B3E-AF8A-A482A8E6A544}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -120,6 +146,11 @@ Global
 		{764F8CE0-EF7F-432E-8FDF-F421A64589A9} = {4260D2BE-FC8C-42FF-A802-CAD342337B8D}
 		{3E99FA9B-249C-42BD-B6B8-01BEF9FC4AA5} = {F6E26D86-D8A0-4051-8113-45F407664A6F}
 		{D2F6153B-1133-ED63-DCC9-B361235EC440} = {F6E26D86-D8A0-4051-8113-45F407664A6F}
+		{549D8080-F9B5-4730-A558-6407E3CBD8DD} = {685E5CD5-CCAC-47E7-9106-B22AA5641F2E}
+		{8DB478D3-ACE7-4511-917C-7F457AE8A1A0} = {685E5CD5-CCAC-47E7-9106-B22AA5641F2E}
+		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {5BAE22E3-DE23-4457-B27B-D77D9924AFB2}
+		{3906FE2D-8464-4F9F-B553-798D596F6020} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{6E8436D5-B757-4B3E-AF8A-A482A8E6A544} = {CF1D8D3A-2480-4D0F-B5CF-112203FF459C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {18C99B7E-EC34-4186-9A06-C97F1FDC646F}
