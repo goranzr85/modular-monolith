@@ -1,6 +1,9 @@
-﻿namespace Modular.Customers.Models;
+﻿using Modular.Common;
+using Modular.Customers.IntegrationEvents;
 
-public class Customer
+namespace Modular.Customers.Models;
+
+public sealed class Customer : AggregateRoot
 {
     public Guid Id { get; private init; }
     public FullName FullName { get; private set; }
@@ -19,42 +22,58 @@ public class Customer
         Contact = contact;
     }
 
-    public void ChangeAddress(Address newAddress)
+    internal void ChangeAddress(Address newAddress)
     {
-        if (newAddress is null)
+        if (!Address.Equals(newAddress))
         {
-            throw new ArgumentNullException(nameof(newAddress), "Address cannot be null.");
+            return;
         }
 
         Address = newAddress;
     }
 
-    public void ChangeShippingAddress(Address newShipingAddress)
+    internal void ChangeShippingAddress(Address newShipingAddress)
     {
-        if (newShipingAddress is null)
+        if (!(bool)ShippingAddress?.Equals(newShipingAddress))
         {
-            throw new ArgumentNullException(nameof(newShipingAddress), "Shipping address cannot be null.");
+            return;
         }
+
+        RaiseEvent(new CustomerChangedShippingAddressEvent(Id,
+            new IntegrationEvents.Address(newShipingAddress.Street,
+            newShipingAddress.City,
+            newShipingAddress.State,
+            newShipingAddress.Zip)));
 
         ShippingAddress = newShipingAddress;
     }
 
-    public void ChangeContact(Contact contact)
+    internal void ChangeContact(Contact contact)
     {
-        if (contact is null)
+        if (Contact.Equals(contact))
         {
-            throw new ArgumentNullException(nameof(contact), "Contact cannot be null.");
+            return;
         }
+
+        RaiseEvent(new CustomerChangedContactInformationEvent(Id,
+            new ContactInfo(contact.Email,
+                contact.Phone,
+                contact.PrimaryContactType)));
 
         Contact = contact;
     }
 
-    public void ChangeFullName(FullName fullName)
+    internal void ChangeFullName(FullName fullName)
     {
         if (fullName is null)
         {
             throw new ArgumentNullException(nameof(fullName), "FullName cannot be null.");
         }
+
+        RaiseEvent(new CustomerChangedNameEvent(Id,
+            new IntegrationEvents.FullName(fullName.FirstName,
+            fullName.MiddleName,
+            fullName.LastName)));
 
         FullName = fullName;
     }
@@ -77,7 +96,14 @@ public class Customer
         }
 
         var id = Ulid.NewUlid().ToGuid();
-        return new Customer(id, fullName, address, shippingAddress ?? address, contact);
+        Customer customer = new(id, fullName, address, shippingAddress ?? address, contact);
+
+        customer.RaiseEvent(new CustomerCreatedEvent(id,
+            new IntegrationEvents.FullName(fullName.FirstName, fullName.MiddleName, fullName.LastName),
+            new IntegrationEvents.Address(address.Street, address.City, address.State, address.Zip),
+            new ContactInfo(contact.Email, contact.Phone, contact.PrimaryContactType)));
+
+        return customer;
     }
 }
 

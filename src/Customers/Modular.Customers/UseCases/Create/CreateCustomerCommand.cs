@@ -1,12 +1,13 @@
 ﻿using ErrorOr;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using Modular.Common;
 using Modular.Customers.Models;
 
 namespace Modular.Customers.UseCases.Create;
 
 internal sealed record CreateCustomerCommand(string FirstName, string? MiddleName, string LastName,
-AddressDto Address, AddressDto? ShippingAddress, string? Email, string? Phone) : IRequest<ErrorOr<CreateCustomerResponse>>
+AddressDto Address, AddressDto? ShippingAddress, string? Email, string? Phone, PrimaryContactType PrimaryContactType) : IRequest<ErrorOr<CreateCustomerResponse>>
 {
 }
 
@@ -39,7 +40,7 @@ internal sealed class CreateCustomerCommandHandler : IRequestHandler<CreateCusto
                 Address.Create(request.ShippingAddress.Street, request.ShippingAddress.City, request.ShippingAddress.State, request.ShippingAddress.Zip)
                 : address;
 
-        ErrorOr<Contact> contactResponse = await _contactFactory.CreateAsync(request.Email, request.Phone);
+        ErrorOr<Contact> contactResponse = await _contactFactory.CreateAsync(request.Email, request.Phone, request.PrimaryContactType);
 
         if (contactResponse.IsError)
         {

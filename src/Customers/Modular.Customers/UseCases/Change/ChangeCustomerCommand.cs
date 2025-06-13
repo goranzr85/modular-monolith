@@ -1,12 +1,13 @@
 ﻿using ErrorOr;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Modular.Common;
 using Modular.Customers.Models;
 
 namespace Modular.Customers.UseCases.Change;
 
 internal sealed record ChangeCustomerCommand(Guid CustomerId, string FirstName, string? MiddleName, string LastName,
-AddressDto Address, AddressDto? ShippingAddress, string? Email, string? Phone) : IRequest<ErrorOr<Unit>>
+AddressDto Address, AddressDto? ShippingAddress, string? Email, string? Phone, PrimaryContactType PrimaryContactType) : IRequest<ErrorOr<Unit>>
 {
 }
 
@@ -31,9 +32,9 @@ internal sealed class ChangeCustomerCommandHandler : IRequestHandler<ChangeCusto
             return Error.NotFound("Customers.NotFound", "Customer does not exist.");
         }
 
-        if (customer.Contact.Email != request.Email || customer.Contact.Phone != request.Phone)
+        if (IsContactChanged(request, customer))
         {
-            ErrorOr<Contact> newContactResponse = await _contactFactory.CreateAsync(request.CustomerId, request.Email, request.Phone);
+            ErrorOr<Contact> newContactResponse = await _contactFactory.CreateAsync(request.CustomerId, request.Email, request.Phone, request.PrimaryContactType);
 
             if (newContactResponse.IsError)
             {
@@ -64,5 +65,10 @@ internal sealed class ChangeCustomerCommandHandler : IRequestHandler<ChangeCusto
         await _customerDbContext.SaveChangesAsync(cancellationToken);
 
         return Unit.Value;
+    }
+
+    private static bool IsContactChanged(ChangeCustomerCommand request, Customer customer)
+    {
+        return customer.Contact.Email != request.Email || customer.Contact.Phone != request.Phone || customer.Contact.PrimaryContactType != request.PrimaryContactType;
     }
 }

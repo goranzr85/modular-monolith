@@ -14,7 +14,7 @@ public sealed class ChangeAddressEndpoint : ICarterModule
         app.MapPut("/api/customers/id", async (Guid id, ChangeCustomerRequest request, ISender sender, CancellationToken cancellationToken) =>
         {
             ChangeCustomerCommand command = new(id, request.FirstName, request.MiddleName, request.LastName,
-                request.Address, request.ShippingAddress, request.Email, request.Phone);
+                request.Address, request.ShippingAddress, request.Email, request.Phone, request.PrimaryContactType);
 
             ErrorOr<Unit> response = await sender.Send(command, cancellationToken);
 

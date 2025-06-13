@@ -2,7 +2,7 @@
 
 namespace Modular.Customers.Models;
 
-public class FullName
+public sealed class FullName
 {
     public string FirstName { get; private set; }
     public string? MiddleName { get; private set; }

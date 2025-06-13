@@ -21,6 +21,7 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\..\Common\Modular.Common\Modular.Common.csproj" />
+	  <ProjectReference Include="..\Modular.Customers.IntegrationEvents\Modular.Customers.IntegrationEvents.csproj" />
 	</ItemGroup>
 
 	<!--<ItemGroup>
