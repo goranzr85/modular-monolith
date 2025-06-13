@@ -11,4 +11,5 @@ public sealed class OrderItem
     internal string ProductSku { get; set; }
     internal Guid OrderId { get; set; }
     internal uint Quantity { get; set; }
+    internal ProductShippedStatus  ShippedStatus { get; set; }
 }

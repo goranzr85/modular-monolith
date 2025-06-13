@@ -19,7 +19,9 @@ internal sealed class ProductShippingCommandHandler : IRequestHandler<ProductShi
     private readonly TimeProvider _dateTimeProvider;
     private readonly ILogger<ProductShippingCommandHandler> _logger;
 
-    public ProductShippingCommandHandler(IDocumentStore documentStore, ILogger<ProductShippingCommandHandler> logger, TimeProvider dateTimeProvider,
+    public ProductShippingCommandHandler(IDocumentStore documentStore,
+        ILogger<ProductShippingCommandHandler> logger,
+        TimeProvider dateTimeProvider,
         IPublishEndpoint publishEndpoint)
     {
         _documentStore = documentStore;
