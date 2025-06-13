@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using Modular.Catalog.IntegrationEvents;
 using Modular.Orders.UseCases.Common;
 
-namespace Modular.Orders.UseCases.Products.Create;
+namespace Modular.Orders.UseCases.Products.Created;
 
 internal sealed class ProductCreatedEventHandler : IConsumer<ProductCreatedIntegrationEvent>
 {

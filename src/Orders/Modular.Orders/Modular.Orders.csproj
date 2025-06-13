@@ -13,8 +13,9 @@
 	<ItemGroup>
 		<ProjectReference Include="..\..\Catalog\Modular.ProductIntegrationEvents\Modular.Catalog.IntegrationEvents.csproj" />
 		<ProjectReference Include="..\..\Common\Modular.Common\Modular.Common.csproj" />
+		<ProjectReference Include="..\..\Payments\Modular.Payments.IntegrationEvents\Modular.Payments.IntegrationEvents.csproj" />
 		<ProjectReference Include="..\..\Warehouse\Modular.Warehouse.IntegrationEvents\Modular.Warehouse.IntegrationEvents.csproj" />
-		<ProjectReference Include="..\Modular.Orders.IntegrationEvents\Modular.Orders.IntegrationEvents.csproj" />
+		<ProjectReference Include="..\Modular.Orders.IntegrationEvents\Modular.Orders.Integrations.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -87,12 +87,6 @@ public sealed class OrderDbContext : DbContext
 
             builder.ComplexProperty(c => c.ShippedStatus);
 
-            //builder.OwnsOne(o => o.ShippedStatus, navigationBuilder =>
-            //{
-            //    navigationBuilder.Property(s => s.IsShipped).HasColumnName("IsShipped");
-            //    navigationBuilder.Property(s => s.Date).HasColumnName("ShippedDate");
-            //});
-
             builder.ToTable("OrderItems");
         });
     }

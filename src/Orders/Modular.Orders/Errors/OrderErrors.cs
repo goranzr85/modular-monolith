@@ -20,6 +20,8 @@ internal static class OrderErrors
 
     internal static ErrorOr<Unit> ProductIsNotPlaced(Guid orderId, int productId) =>
          Error.NotFound("Order.ProductIsNotPlaced", $"Product with ID '{productId}' is not placed in order '{orderId}'.");
+    internal static ErrorOr<Unit> ProductIsNotPlaced(Guid orderId, string productSku) =>
+         Error.NotFound("Order.ProductIsNotPlaced", $"Product with SKU '{productSku}' is not placed in order '{orderId}'.");
 
     internal static ErrorOr<Unit> AddItemToOrderError(Guid orderId, int productId) =>
         Error.Failure("Order.AddItemError", $"Product with ID '{productId}' is not placed in order '{orderId}'.");
@@ -29,11 +31,14 @@ internal static class OrderErrors
 
     internal static ErrorOr<Unit> ProductQuantityIsNotEnoughForDecrease(Guid orderId, int productId, uint quantity)=>
         Error.Validation("Order.ProductQuantityIsNotEnoughForDecrease", $" Can not be removed '{quantity}' pieces of product with ID '{productId}' from order with ID '{orderId}'. There is no enough pieces of product placed in order.");
+    internal static ErrorOr<Unit> ProductAlreadyShipped(Guid orderId, string productSku) =>
+    Error.Validation("Order.ProductAlreadyShipped", $" Product with SKU '{productSku}' from order with ID '{orderId}' is already shipped.");
 
     internal static ErrorOr<Unit> IncreaseProductQuantityError(Guid orderId, int productId, uint quantity) =>
         Error.Failure("Order.IncreaseProductQuantityError", $"An error occurred while increasing quantity ('{quantity}' pieces) for product with ID '{productId}' in order '{orderId}'.");
    
     internal static ErrorOr<Unit> DecreaseProductQuantityError(Guid orderId, int productId, uint quantity) =>
         Error.Failure("Order.DecreaseProductQuantityError", $"An error occurred while decreasing quantity ('{quantity}' pieces) for product with ID '{productId}' in order '{orderId}'.");
+
 }
 

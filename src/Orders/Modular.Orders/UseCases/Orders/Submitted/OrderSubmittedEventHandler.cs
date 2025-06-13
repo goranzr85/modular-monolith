@@ -1,15 +1,13 @@
 ﻿using MassTransit;
-using Modular.Orders.IntegrationEvents;
+using Modular.Orders.Integrations;
 
 namespace Modular.Orders.UseCases.Orders.Submitted;
 internal sealed class OrderSubmittedEventHandler : IConsumer<OrderSubmittedEvent>
 {
-    private readonly OrderDbContext _orderDbContext;
     private readonly IPublishEndpoint _publishEndpoint;
 
-    public OrderSubmittedEventHandler(OrderDbContext orderDbContext, IPublishEndpoint publishEndpoint)
+    public OrderSubmittedEventHandler(IPublishEndpoint publishEndpoint)
     {
-        _orderDbContext = orderDbContext;
         _publishEndpoint = publishEndpoint;
     }
 

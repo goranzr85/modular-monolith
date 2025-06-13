@@ -21,6 +21,10 @@ public sealed class Order : AggregateRoot
     public List<OrderItem> Items { get; private set; }
     public OrderStatus Status { get; internal set; }
 
+    public DateTimeOffset? CanceledDate { get; internal set; }
+    public DateTimeOffset? SubmittedDate { get; internal set; }
+    public DateTimeOffset? ShippedDate { get; internal set; }
+
     private Order()
     {
         Items = new List<OrderItem>();
@@ -145,6 +149,8 @@ public sealed class Order : AggregateRoot
             return result.FirstError;
         }
 
+        CanceledDate = DateTimeOffset.UtcNow;
+
         RaiseEvent(new OrderCanceledEvent(Id));
 
         return Unit.Value;
@@ -159,7 +165,34 @@ public sealed class Order : AggregateRoot
             return result.FirstError;
         }
 
+        SubmittedDate = DateTimeOffset.UtcNow;
         RaiseEvent(new OrderSubmittedEvent(Id, CustomerId, TotalAmount));
+
+        return Unit.Value;
+    }
+
+    internal ErrorOr<Unit> MarkItemAsShipped(string productSku)
+    {
+        OrderItem? orderItem = Items.FirstOrDefault(x => x.Product.SKU.Equals(productSku, StringComparison.Ordinal));
+
+        if(orderItem is null)
+        {
+            return OrderErrors.ProductIsNotPlaced(Id, productSku);
+        }
+
+        if (orderItem.ShippedStatus == ProductShippedStatus.Shipped)
+        {
+            return OrderErrors.ProductAlreadyShipped(Id, productSku);
+        }
+
+        orderItem.MarkAsShipped();
+
+        if (Items.All(i => i.ShippedStatus is ShippedStatus))
+        {
+            ChangeStatus(OrderStatus.Shipped);
+            ShippedDate = DateTimeOffset.UtcNow;
+            RaiseEvent(new OrderShippedEvent(Id, CustomerId, TotalAmount));
+        }
 
         return Unit.Value;
     }

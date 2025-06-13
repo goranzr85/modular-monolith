@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Modular.Orders.UseCases.Products.Create;
+using Modular.Orders.UseCases.Products.Created;
 using Modular.Orders.UseCases.Products.Received;
 
 namespace Modular.Orders;

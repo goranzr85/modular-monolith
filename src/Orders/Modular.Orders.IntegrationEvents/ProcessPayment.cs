@@ -1,4 +1,4 @@
 ﻿using Modular.Common;
 
-namespace Modular.Orders.IntegrationEvents;
+namespace Modular.Orders.Integrations;
 public sealed record ProcessPayment(Guid OrderId, Guid CustomerId, Price TotalAmount) : IIntegrationEvent;
