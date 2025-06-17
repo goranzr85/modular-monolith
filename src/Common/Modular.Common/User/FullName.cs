@@ -1,6 +1,6 @@
 ﻿using ErrorOr;
 
-namespace Modular.Customers.Models;
+namespace Modular.Common.User;
 
 public sealed class FullName
 {

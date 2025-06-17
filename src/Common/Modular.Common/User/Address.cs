@@ -1,4 +1,4 @@
-﻿namespace Modular.Customers.Models;
+﻿namespace Modular.Common.User;
 
 public sealed class Address : IEquatable<Address>
 {

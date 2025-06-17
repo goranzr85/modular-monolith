@@ -1,4 +1,5 @@
 ﻿using Modular.Common;
+using Modular.Common.Events;
 
 namespace Modular.Catalog.UseCases.Create.DomainEvents;
 

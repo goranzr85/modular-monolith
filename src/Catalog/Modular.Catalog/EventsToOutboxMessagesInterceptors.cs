@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Modular.Common;
+using Modular.Common.Events;
 using Newtonsoft.Json;
 
 namespace Modular.Catalog;

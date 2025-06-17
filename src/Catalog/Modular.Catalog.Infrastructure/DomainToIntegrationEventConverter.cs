@@ -1,6 +1,6 @@
 ﻿using Modular.Catalog.IntegrationEvents;
 using Modular.Catalog.UseCases.Create.DomainEvents;
-using Modular.Common;
+using Modular.Common.Events;
 
 namespace Modular.Catalog.Infrastructure;
 internal sealed class DomainToIntegrationEventConverter

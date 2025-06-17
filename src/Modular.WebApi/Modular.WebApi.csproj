@@ -23,6 +23,8 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Catalog\Modular.Catalog.Infrastructure\Modular.Catalog.Infrastructure.csproj" />
 		<ProjectReference Include="..\Customers\Modular.Customers\Modular.Customers.csproj" />
+		<ProjectReference Include="..\Notifications\Modular.Notifications.Infrastructure\Modular.Notifications.Infrastructure.csproj" />
+		<ProjectReference Include="..\Notifications\Modular.Notifications\Modular.Notifications.csproj" />
 		<ProjectReference Include="..\Orders\Modular.Orders\Modular.Orders.csproj" />
 		<ProjectReference Include="..\Warehouse\Modular.Warehouse\Modular.Warehouse.csproj" />
 	</ItemGroup>

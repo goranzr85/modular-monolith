@@ -1,7 +1,7 @@
 ﻿using MassTransit;
 using Modular.Customers.IntegrationEvents;
 
-namespace Modular.Notifications;
+namespace Modular.Notifications.Customers;
 internal sealed class CustomerEventsHandler : IConsumer<CustomerCreatedEvent>,
     IConsumer<CustomerChangedNameEvent>,
     IConsumer<CustomerChangedContactInformationEvent>

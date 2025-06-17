@@ -1,4 +1,4 @@
-﻿namespace Modular.Common;
+﻿namespace Modular.Common.User;
 
 public sealed class Contact : IEquatable<Contact>
 {
@@ -6,7 +6,7 @@ public sealed class Contact : IEquatable<Contact>
     public string? Phone { get; private set; }
     public PrimaryContactType PrimaryContactType { get; private set; }
 
-    internal Contact(string? email, string? phone, PrimaryContactType primaryContactType)
+    public Contact(string? email, string? phone, PrimaryContactType primaryContactType)
     {
         Email = email;
         Phone = phone;

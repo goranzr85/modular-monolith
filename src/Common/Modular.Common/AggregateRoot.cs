@@ -1,4 +1,6 @@
-﻿namespace Modular.Common;
+﻿using Modular.Common.Events;
+
+namespace Modular.Common;
 
 public abstract class AggregateRoot
 {

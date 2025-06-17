@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Modular.Common;
+using Modular.Common.Events;
 using Newtonsoft.Json;
 using Polly.Registry;
 using Quartz;

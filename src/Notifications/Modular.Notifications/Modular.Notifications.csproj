@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Common\Modular.Common\Modular.Common.csproj" />
     <ProjectReference Include="..\..\Customers\Modular.Customers.IntegrationEvents\Modular.Customers.IntegrationEvents.csproj" />
     <ProjectReference Include="..\..\Orders\Modular.Orders.Infrastructure\Modular.Orders.Infrastructure.csproj" />
   </ItemGroup>
