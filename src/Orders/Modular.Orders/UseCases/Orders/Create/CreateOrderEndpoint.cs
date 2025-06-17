@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Modular.Common;
 
-namespace Modular.Orders.Create;
+namespace Modular.Orders.UseCases.Orders.Create;
 
 public sealed class CreateOrderEndpoint : ICarterModule
 {

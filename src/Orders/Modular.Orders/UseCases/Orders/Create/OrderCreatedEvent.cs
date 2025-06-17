@@ -1,4 +1,4 @@
-﻿using Modular.Common;
+﻿using Modular.Common.Events;
 using Modular.Orders.UseCases.Orders.Models;
 
 namespace Modular.Orders.UseCases.Orders.Create;

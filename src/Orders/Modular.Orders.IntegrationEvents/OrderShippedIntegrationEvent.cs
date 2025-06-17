@@ -1,4 +1,5 @@
 ﻿using Modular.Common;
+using Modular.Common.Events;
 
 namespace Modular.Orders.Integrations;
 public sealed class OrderShippedIntegrationEvent : IIntegrationEvent

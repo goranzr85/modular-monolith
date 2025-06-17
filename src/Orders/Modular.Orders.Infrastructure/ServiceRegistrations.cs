@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Modular.Orders.Infrastructure.BackgroundJobs;
 using Quartz;
 
-namespace Modular.Catalog.Infrastructure;
+namespace Modular.Orders.Infrastructure;
 public static class ServiceRegistrations
 {
     public static IServiceCollection RegisterCatalogsBackgroundJobs(this IServiceCollection services)

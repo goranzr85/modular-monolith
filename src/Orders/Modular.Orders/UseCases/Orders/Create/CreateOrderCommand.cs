@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using Modular.Orders.Errors;
 using Modular.Orders.UseCases.Orders.Models;
 
-namespace Modular.Orders.Create;
+namespace Modular.Orders.UseCases.Orders.Create;
 
 internal sealed record CreateOrderCommand(Guid OrderId, DateTimeOffset OrderDate, Guid CustomerId, List<OrderItem> Items) : IRequest<ErrorOr<Guid>>;
 
