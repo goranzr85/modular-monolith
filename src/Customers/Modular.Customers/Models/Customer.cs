@@ -1,5 +1,8 @@
 ﻿using Modular.Common;
+using Modular.Common.User;
 using Modular.Customers.IntegrationEvents;
+using FullName = Modular.Common.User.FullName;
+using Address = Modular.Common.User.Address;
 
 namespace Modular.Customers.Models;
 

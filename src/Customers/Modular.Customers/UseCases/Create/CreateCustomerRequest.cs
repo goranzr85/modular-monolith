@@ -1,8 +1,9 @@
-﻿using Modular.Customers.Models;
+﻿using Modular.Common.User;
+using Modular.Customers.Models;
 
 namespace Modular.Customers.UseCases.Create;
 
 internal sealed record CreateCustomerRequest(string FirstName, string? MiddleName, string LastName,
-    AddressDto Address, AddressDto? ShippingAddress, string? Email, string? Phone)
+    AddressDto Address, AddressDto? ShippingAddress, string? Email, string? Phone, PrimaryContactType PrimaryContactType)
 {
 }

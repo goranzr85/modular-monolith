@@ -1,4 +1,4 @@
-﻿using Modular.Common;
+﻿using Modular.Common.User;
 
 namespace Modular.Customers.IntegrationEvents;
 

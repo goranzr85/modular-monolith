@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Modular.Customers.Configuration;
+using Modular.Common.User.Configuration;
 using Modular.Customers.Models;
 
 namespace Modular.Customers;
@@ -16,7 +16,7 @@ public class CustomerDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultSchema(Schema); // This line will work now
+        modelBuilder.HasDefaultSchema(Schema);
 
         modelBuilder.Entity<Customer>(builder =>
         {
@@ -97,12 +97,17 @@ public class CustomerDbContext : DbContext
                 buildAction.Property(o => o!.Email)
                     .HasColumnName("Email")
                     .HasMaxLength(ContactConfiguration.EmailMaxLength)
-                    .IsRequired(false); // Email is nullable
+                    .IsRequired(false);
 
                 buildAction.Property(o => o!.Phone)
                     .HasColumnName("Phone")
                     .HasMaxLength(ContactConfiguration.PhoneMaxLength)
-                    .IsRequired(false); // Phone is nullable
+                    .IsRequired(false);
+
+                buildAction.Property(o => o!.PrimaryContactType)
+                    .HasColumnName("PrimaryContactType")
+                    .HasConversion<string>()
+                    .IsRequired();
 
                 buildAction.IsRequired();
             });

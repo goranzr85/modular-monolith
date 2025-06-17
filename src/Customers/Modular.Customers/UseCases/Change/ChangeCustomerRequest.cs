@@ -1,4 +1,4 @@
-﻿using Modular.Common;
+﻿using Modular.Common.User;
 using Modular.Customers.Models;
 
 namespace Modular.Customers.UseCases.Change;

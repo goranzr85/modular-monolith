@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using Modular.Customers.Configuration;
+using Modular.Common.User.Configuration;
 
 namespace Modular.Customers.UseCases.Create;
 

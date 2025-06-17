@@ -1,7 +1,7 @@
 ﻿using ErrorOr;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using Modular.Common;
+using Modular.Common.User;
 using Modular.Customers.Models;
 
 namespace Modular.Customers.UseCases.Create;
