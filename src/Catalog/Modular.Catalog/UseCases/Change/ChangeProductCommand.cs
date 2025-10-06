@@ -24,16 +24,16 @@ internal sealed record ChangeProductCommand(string Sku, string Name, string Desc
 
 internal sealed class ChangeProductCommandHandler : IRequestHandler<ChangeProductCommand, ErrorOr<Unit>>
 {
-    private readonly CatalogDbContext _customerDbContext;
+    private readonly CatalogDbContext _catalogDbContext;
 
-    public ChangeProductCommandHandler(CatalogDbContext customerDbContext)
+    public ChangeProductCommandHandler(CatalogDbContext catalogDbContext)
     {
-        _customerDbContext = customerDbContext;
+        _catalogDbContext = catalogDbContext;
     }
 
     public async Task<ErrorOr<Unit>> Handle(ChangeProductCommand request, CancellationToken cancellationToken)
     {
-        Product? product = await _customerDbContext.Products
+        Product? product = await _catalogDbContext.Products
             .FirstOrDefaultAsync(p => p.Sku == request.Sku, cancellationToken);
 
         if (product is null)
@@ -43,8 +43,8 @@ internal sealed class ChangeProductCommandHandler : IRequestHandler<ChangeProduc
 
         product.Change(request.Sku, request.Name, request.Description, Price.Create(request.Price));
 
-        _customerDbContext.Update(product);
-        await _customerDbContext.SaveChangesAsync(cancellationToken);
+        _catalogDbContext.Update(product);
+        await _catalogDbContext.SaveChangesAsync(cancellationToken);
 
         return Unit.Value;
     }

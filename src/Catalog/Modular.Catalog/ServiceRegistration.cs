@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Modular.Common;
 
 namespace Modular.Catalog;
 
@@ -8,7 +9,7 @@ public static class ServiceRegistration
 {
     public static IServiceCollection RegisterCustomerModule(this IServiceCollection services, IConfiguration configuration)
     {
-        string? connectionString = configuration.GetConnectionString("DefaultConnection");
+        string? connectionString = configuration.GetConnectionString("eshop");
 
         services.AddSingleton<EventsToOutboxMessagesInterceptors>();
         services.AddDbContext<CatalogDbContext>((sp, options) =>

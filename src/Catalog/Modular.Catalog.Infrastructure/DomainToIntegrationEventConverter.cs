@@ -3,7 +3,7 @@ using Modular.Catalog.UseCases.Create.DomainEvents;
 using Modular.Common.Events;
 
 namespace Modular.Catalog.Infrastructure;
-internal sealed class DomainToIntegrationEventConverter
+internal static class DomainToIntegrationEventConverter
 {
     internal static IIntegrationEvent Convert(IDomainEvent domainEvent)
     {

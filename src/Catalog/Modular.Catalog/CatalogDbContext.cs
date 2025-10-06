@@ -18,6 +18,7 @@ public sealed class CatalogDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
+        modelBuilder.ApplyConfiguration(new OutputMessageConfiguration());
 
         modelBuilder.Entity<Product>(builder =>
         {
@@ -44,27 +45,6 @@ public sealed class CatalogDbContext : DbContext
                 .IsRequired();
 
             builder.ToTable("Products");
-        });
-
-        modelBuilder.Entity<OutboxMessage>(builder =>
-        {
-            builder.HasKey(c => c.Id);
-
-            builder.Property(c => c.Type)
-                .HasMaxLength(50)
-                .IsRequired();
-
-            builder.Property(c => c.Content)
-                .HasMaxLength(1000)
-                .IsRequired();
-
-            builder.Property(c => c.OccurredOnUtc)
-                .IsRequired();
-
-            builder.Property(c => c.Error)
-                .HasMaxLength(3000);
-
-            builder.ToTable("OutboxMessages");
         });
 
     }

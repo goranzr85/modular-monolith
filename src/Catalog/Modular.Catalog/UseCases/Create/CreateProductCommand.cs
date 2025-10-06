@@ -13,12 +13,12 @@ internal sealed record CreateProductCommand(string Sku, string Name, string Desc
 
 internal sealed class CreateProductCommandHandler : IRequestHandler<CreateProductCommand, ErrorOr<Unit>>
 {
-    private readonly CatalogDbContext _customerDbContext;
+    private readonly CatalogDbContext _catalogDbContext;
     private readonly ILogger<CreateProductCommandHandler> _logger;
 
-    public CreateProductCommandHandler(CatalogDbContext customerDbContext, ILogger<CreateProductCommandHandler> logger)
+    public CreateProductCommandHandler(CatalogDbContext catalogDbContext, ILogger<CreateProductCommandHandler> logger)
     {
-        _customerDbContext = customerDbContext;
+        _catalogDbContext = catalogDbContext;
         _logger = logger;
     }
 
@@ -26,7 +26,7 @@ internal sealed class CreateProductCommandHandler : IRequestHandler<CreateProduc
     {
         try
         {
-            Product? product = await _customerDbContext.Products
+            Product? product = await _catalogDbContext.Products
                 .FirstOrDefaultAsync(p => p.Sku == request.Sku, cancellationToken);
 
             if (product is not null)
@@ -43,8 +43,8 @@ internal sealed class CreateProductCommandHandler : IRequestHandler<CreateProduc
 
             product = productResult.Value;
 
-            await _customerDbContext.Products.AddAsync(product, cancellationToken);
-            await _customerDbContext.SaveChangesAsync(cancellationToken);
+            await _catalogDbContext.Products.AddAsync(product, cancellationToken);
+            await _catalogDbContext.SaveChangesAsync(cancellationToken);
 
             return Unit.Value;
         }
