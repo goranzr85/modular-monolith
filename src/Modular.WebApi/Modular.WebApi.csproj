@@ -8,7 +8,9 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" />
 		<PackageReference Include="Carter" />
+		<PackageReference Include="CommunityToolkit.Aspire.MassTransit.RabbitMQ" />
 		<PackageReference Include="MassTransit" />
 		<PackageReference Include="MassTransit.RabbitMQ" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" />
@@ -23,6 +25,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Catalog\Modular.Catalog.Infrastructure\Modular.Catalog.Infrastructure.csproj" />
 		<ProjectReference Include="..\Customers\Modular.Customers\Modular.Customers.csproj" />
+		<ProjectReference Include="..\modular-monolith.ServiceDefaults\modular-monolith.ServiceDefaults.csproj" />
 		<ProjectReference Include="..\Notifications\Modular.Notifications.Infrastructure\Modular.Notifications.Infrastructure.csproj" />
 		<ProjectReference Include="..\Notifications\Modular.Notifications\Modular.Notifications.csproj" />
 		<ProjectReference Include="..\Orders\Modular.Orders\Modular.Orders.csproj" />

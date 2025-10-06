@@ -14,7 +14,7 @@ public static class ServiceRegistration
     {
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(ServiceRegistration).Assembly));
 
-        string? connectionString = configuration.GetConnectionString("DefaultConnection");
+        string? connectionString = configuration.GetConnectionString("eshop");
 
         services.AddDbContext<OrderDbContext>((sp, options) =>
         {
@@ -36,13 +36,15 @@ public static class ServiceRegistration
         });
     }
 
-    public static void AddWarehouseConsumers(this IBusRegistrationConfigurator brc)
+    public static void AddWarehouseConsumers(this IBusRegistrationConfigurator brc, IConfiguration configuration)
     {
         brc.AddConsumer<ProductCreatedNotificationHandler>();
 
+        string? connectionString = configuration.GetConnectionString("eshop");
+
         brc.AddMarten(cfg =>
         {
-            cfg.Connection("Host=localhost;Database=mydatabase;Username=myuser;Password=mypassword");
+            cfg.Connection(connectionString!);
             cfg.AutoCreateSchemaObjects = AutoCreate.All;
             cfg.UseSystemTextJsonForSerialization();
             cfg.Events.StreamIdentity = StreamIdentity.AsString;

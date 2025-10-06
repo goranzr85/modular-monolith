@@ -4,7 +4,7 @@ using Modular.Warehouse.UseCases.Orders;
 namespace Modular.Warehouse;
 public sealed class OrderDbContext : DbContext
 {
-    internal static readonly string Schema = "warehouse";
+    internal static readonly string Schema = "Warehouse";
 
     public OrderDbContext(DbContextOptions<OrderDbContext> options) : base(options)
     {

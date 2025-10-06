@@ -11,7 +11,7 @@ public static class ServiceRegistration
 {
     public static IServiceCollection RegisterOrderModule(this IServiceCollection services, IConfiguration configuration)
     {
-        string? connectionString = configuration.GetConnectionString("DefaultConnection");
+        string? connectionString = configuration.GetConnectionString("eshop");
 
         services.AddDbContext<OrderDbContext>((sp, options) =>
         {
