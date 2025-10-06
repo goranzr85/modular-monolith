@@ -5,6 +5,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Aspire.Keycloak.Authentication" />
 		<PackageReference Include="FluentValidation" />
 		<PackageReference Include="FluentValidator" />
 		<PackageReference Include="MediatR" />
@@ -23,18 +24,5 @@
 	  <ProjectReference Include="..\..\Common\Modular.Common\Modular.Common.csproj" />
 	  <ProjectReference Include="..\Modular.Customers.IntegrationEvents\Modular.Customers.IntegrationEvents.csproj" />
 	</ItemGroup>
-
-	<!--<ItemGroup>
-		<Content Include="appsettings.Development.json">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-		</Content>
-		<Content Include="appsettings.json">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-		</Content>
-	</ItemGroup>-->
 
 </Project>

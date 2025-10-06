@@ -107,6 +107,7 @@ public class CustomerDbContext : DbContext
                 buildAction.Property(o => o!.PrimaryContactType)
                     .HasColumnName("PrimaryContactType")
                     .HasConversion<string>()
+                    .HasMaxLength(ContactConfiguration.PrimaryContactTypeMaxLength)
                     .IsRequired();
 
                 buildAction.IsRequired();

@@ -27,9 +27,10 @@ public sealed class GetCustomerEndpoint : ICarterModule
        .WithName("GetCustomer")
        .WithTags("Customers")
        .Produces(StatusCodes.Status404NotFound)
-       .Produces(StatusCodes.Status200OK);
+       .Produces(StatusCodes.Status200OK)
+       .RequireAuthorization();
 
-        app.MapGet("/api/customers", async (CustomerDbContext customerDbContext, CancellationToken cancellationToken) =>
+        app.MapGet("/api/customers", async (CustomerDbContext customerDbContext, HttpContext httpContext, CancellationToken cancellationToken) =>
         {
             GetCustomerResponse[] customers = await customerDbContext.Customers
             .Select(x => new GetCustomerResponse(x.Id, x.FullName.FirstName, x.FullName.MiddleName, x.FullName.LastName,
@@ -41,6 +42,7 @@ public sealed class GetCustomerEndpoint : ICarterModule
         .WithName("GetCustomers")
         .WithTags("Customers")
         .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status200OK);
+        .Produces(StatusCodes.Status200OK)
+        .RequireAuthorization();
     }
 }
