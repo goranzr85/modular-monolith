@@ -4,6 +4,6 @@ namespace Modular.Notifications.Customers;
 public sealed class Customer
 {
     public Guid Id { get; init; }
-    public FullName FullName { get; init; }
-    public Contact Contact { get; init; }
+    public FullName FullName { get; internal set; }
+    public Contact Contact { get; internal set; }
 }

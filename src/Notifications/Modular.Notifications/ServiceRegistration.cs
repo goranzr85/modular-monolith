@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using MassTransit;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Modular.Notifications.Customers;
@@ -9,7 +10,7 @@ public static class ServiceRegistration
 {
     public static IServiceCollection RegisterNotificationsModule(this IServiceCollection services, IConfiguration configuration)
     {
-        string? connectionString = configuration.GetConnectionString("DefaultConnection");
+        string? connectionString = configuration.GetConnectionString("eshop");
 
         services.AddDbContext<NotificationDbContext>((sp, options) =>
         {
@@ -24,5 +25,24 @@ public static class ServiceRegistration
         services.AddScoped<OrderShippedNotificationHandler>();
         services.AddScoped<CustomerEventsHandler>();
         return services;
+    }
+
+    public static void ReceiveNotificationsEndpoints(this IRabbitMqBusFactoryConfigurator configurator, IBusRegistrationContext context)
+    {
+        configurator.ReceiveEndpoint("notification-customer-queue", e =>
+        {
+            e.ConfigureConsumer<CustomerEventsHandler>(context);
+        });
+
+        configurator.ReceiveEndpoint("notification-order-shipped-queue", e =>
+        {
+            e.ConfigureConsumer<OrderShippedNotificationHandler>(context);
+        });
+    }
+
+    public static void AddNotificationConsumers(this IBusRegistrationConfigurator brc)
+    {
+        brc.AddConsumer<CustomerEventsHandler>();
+        brc.AddConsumer<OrderShippedNotificationHandler>();
     }
 }
