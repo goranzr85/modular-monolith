@@ -7,13 +7,16 @@ It is created for learning purposes, and includes implementations of:
 - **Event sourcing**  
 - **Aspire**  
 - **Role-based Access Control (RBAC)**  
-- **Keycloak** integration  
+- **Keycloak** integration 
+- **Caching with Redis**
 
 ---
 
 ## 🚧 Still To Be Implemented
 
-- Integration tests using **Testcontainers**  
+- Integration tests using **Testcontainers**  and **Wiremock**
 - **CI/CD pipeline**  
 - **Architecture tests**
-
+- **Open telemetry**
+- Static code analysis
+- Structure logging with **Serilog**
