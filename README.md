@@ -1,15 +1,19 @@
-# modular-monolith
+﻿# Modular Monolith
 
-This is an example project of modular monolith architecture.
-It is created for learning purpose.
-I tried to implement following:
-	- asynchronous communication between boundaries
-	- event sourcing
-	- Aspire
-	- Role-based access control (RBAC)
-	- Keycloak
+This is an example project demonstrating a **modular monolith architecture**.  
+It is created for learning purposes, and includes implementations of:
 
-There are still missing things to implement:
-	- Integration tests with test containers
-	- CI/CD pipeline
-	- Architecture tests
+- **Asynchronous communication** between boundaries  
+- **Event sourcing**  
+- **Aspire**  
+- **Role-based Access Control (RBAC)**  
+- **Keycloak** integration  
+
+---
+
+## 🚧 Still To Be Implemented
+
+- Integration tests using **Testcontainers**  
+- **CI/CD pipeline**  
+- **Architecture tests**
+
