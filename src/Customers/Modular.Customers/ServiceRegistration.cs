@@ -1,6 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Modular.Authorization;
 using Modular.Common;
 using Modular.Customers.Models;
 
@@ -8,7 +10,7 @@ namespace Modular.Customers;
 
 public static class ServiceRegistration
 {
-    public static IServiceCollection RegisterCatalogModule(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection RegisterCustomerModule(this IServiceCollection services, IConfiguration configuration)
     {
         string? connectionString = configuration.GetConnectionString("eshop");
 
@@ -19,7 +21,6 @@ public static class ServiceRegistration
 
             options.UseNpgsql(connectionString, o =>
             {
-                // Specify the schema and table name for the migration history
                 o.MigrationsHistoryTable("__EFMigrationsHistory", CustomerDbContext.Schema);
                 o.MigrationsAssembly(typeof(CustomerDbContext).Assembly.FullName);
             })

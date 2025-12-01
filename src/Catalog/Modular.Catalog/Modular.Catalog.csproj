@@ -13,6 +13,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\..\Common\Modular.Authorization\Modular.Authorization.csproj" />
 	  <ProjectReference Include="..\..\Common\Modular.Common\Modular.Common.csproj" />
 	  <ProjectReference Include="..\Modular.ProductIntegrationEvents\Modular.Catalog.IntegrationEvents.csproj" />
 	</ItemGroup>

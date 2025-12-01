@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
+using Modular.Authorization;
+using Modular.Customers.Authorization;
 
 namespace Modular.Customers.UseCases.Get;
 public sealed class GetCustomerEndpoint : ICarterModule
@@ -25,7 +27,7 @@ public sealed class GetCustomerEndpoint : ICarterModule
             return Results.Ok(customer);
         })
        .WithName("GetCustomer")
-       .WithTags("Customers")
+       .WithTags(Constants.EndpointTag)
        .Produces(StatusCodes.Status404NotFound)
        .Produces(StatusCodes.Status200OK)
        .RequireAuthorization();
@@ -33,16 +35,17 @@ public sealed class GetCustomerEndpoint : ICarterModule
         app.MapGet("/api/customers", async (CustomerDbContext customerDbContext, HttpContext httpContext, CancellationToken cancellationToken) =>
         {
             GetCustomerResponse[] customers = await customerDbContext.Customers
-            .Select(x => new GetCustomerResponse(x.Id, x.FullName.FirstName, x.FullName.MiddleName, x.FullName.LastName,
-                    x.Address.Street, x.Address.City, x.Address.Zip, x.Address.State, x.Contact.Email, x.Contact.Phone))
+            .Select(x => 
+                        new GetCustomerResponse(x.Id, x.FullName.FirstName, x.FullName.MiddleName, x.FullName.LastName,
+                                x.Address.Street, x.Address.City, x.Address.Zip, x.Address.State, x.Contact.Email, x.Contact.Phone))
             .ToArrayAsync(cancellationToken);
 
             return Results.Ok(customers);
         })
         .WithName("GetCustomers")
-        .WithTags("Customers")
+        .WithTags(Constants.EndpointTag)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status200OK)
-        .RequireAuthorization();
+        .RequireAuthorization(policy => policy.RequirePermission(Permissions.CustomerView));
     }
 }

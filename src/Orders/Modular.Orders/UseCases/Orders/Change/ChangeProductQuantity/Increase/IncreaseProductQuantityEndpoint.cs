@@ -4,7 +4,10 @@ using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Modular.Authorization;
 using Modular.Common;
+using Modular.Orders.Authorization;
+using Modular.Orders.UseCases.Common;
 using Modular.Orders.UseCases.Orders.Change.ChangeProductQuantity.Decrease;
 
 namespace Modular.Orders.UseCases.Orders.Change.ChangeProductQuantity.Increase;
@@ -21,9 +24,10 @@ public sealed class IncreaseProductQuantityEndpoint : ICarterModule
             return response.ToResult(_ => Results.NoContent());
         })
         .WithName("IncreaseProductQuantity")
-        .WithTags("Orders")
+        .WithTags(Constants.EndpointTag)
         .Produces(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status500InternalServerError)
-        .Produces(StatusCodes.Status200OK);
+        .Produces(StatusCodes.Status200OK)
+        .RequireAuthorization(policy => policy.RequirePermission(Permissions.OrderUpdate));
     }
 }

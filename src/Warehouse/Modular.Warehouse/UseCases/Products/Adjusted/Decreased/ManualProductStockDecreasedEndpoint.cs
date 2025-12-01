@@ -4,8 +4,9 @@ using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Modular.Authorization;
 using Modular.Common;
-using Modular.Warehouse.UseCases.Products.Adjusted;
+using Modular.Warehouse.Authorization;
 
 namespace Modular.Warehouse.UseCases.Products.Adjusted.Decreased;
 public sealed class ManualProductStockDecreasedEndpoint : ICarterModule
@@ -24,6 +25,7 @@ public sealed class ManualProductStockDecreasedEndpoint : ICarterModule
         .WithTags("Warehouse")
         .Produces(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status500InternalServerError)
-        .Produces(StatusCodes.Status200OK);
+        .Produces(StatusCodes.Status200OK)
+        .RequireAuthorization(policy => policy.RequirePermission(Permissions.WarehouseUpdate));
     }
 }

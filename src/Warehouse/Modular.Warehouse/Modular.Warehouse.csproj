@@ -12,6 +12,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\Catalog\Modular.ProductIntegrationEvents\Modular.Catalog.IntegrationEvents.csproj" />
+		<ProjectReference Include="..\..\Common\Modular.Authorization\Modular.Authorization.csproj" />
 		<ProjectReference Include="..\Modular.Warehouse.IntegrationEvents\Modular.Warehouse.IntegrationEvents.csproj" />
 	</ItemGroup>
 

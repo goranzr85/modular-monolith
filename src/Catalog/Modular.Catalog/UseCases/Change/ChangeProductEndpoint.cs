@@ -4,6 +4,8 @@ using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Modular.Authorization;
+using Modular.Catalog.Authorization;
 using Modular.Common;
 
 namespace Modular.Catalog.UseCases.Change;
@@ -20,9 +22,10 @@ public sealed class ChangeProductEndpoint : ICarterModule
             return response.ToResult((sku) => Results.Ok());
         })
        .WithName("ChangeProduct")
-       .WithTags("Catalogs")
+       .WithTags(Constants.EndpointTag)
        .Produces(StatusCodes.Status400BadRequest)
        .Produces(StatusCodes.Status500InternalServerError)
-       .Produces(StatusCodes.Status201Created);
+       .Produces(StatusCodes.Status201Created)
+       .RequireAuthorization(policy => policy.RequirePermission(Permissions.CatalogUpdate));
     }
 }

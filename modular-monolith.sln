@@ -64,6 +64,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "modular-monolith.AppHost", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "modular-monolith.ServiceDefaults", "src\modular-monolith.ServiceDefaults\modular-monolith.ServiceDefaults.csproj", "{5AAE0461-ACA5-8445-1EA1-A91BC2CB4B54}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modular.Authorization", "src\Common\Modular.Authorization\Modular.Authorization.csproj", "{FBA79300-2436-4EC7-A108-2A91F0EDC883}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -142,6 +144,10 @@ Global
 		{5AAE0461-ACA5-8445-1EA1-A91BC2CB4B54}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5AAE0461-ACA5-8445-1EA1-A91BC2CB4B54}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5AAE0461-ACA5-8445-1EA1-A91BC2CB4B54}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FBA79300-2436-4EC7-A108-2A91F0EDC883}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FBA79300-2436-4EC7-A108-2A91F0EDC883}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FBA79300-2436-4EC7-A108-2A91F0EDC883}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FBA79300-2436-4EC7-A108-2A91F0EDC883}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -170,6 +176,7 @@ Global
 		{3906FE2D-8464-4F9F-B553-798D596F6020} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{6E8436D5-B757-4B3E-AF8A-A482A8E6A544} = {CF1D8D3A-2480-4D0F-B5CF-112203FF459C}
 		{7E66FE06-4FDB-47CE-B585-6DE71E4A0609} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{FBA79300-2436-4EC7-A108-2A91F0EDC883} = {31555A31-A727-4F1B-A29B-8180906799DD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {18C99B7E-EC34-4186-9A06-C97F1FDC646F}

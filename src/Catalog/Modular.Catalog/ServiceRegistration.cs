@@ -7,7 +7,7 @@ namespace Modular.Catalog;
 
 public static class ServiceRegistration
 {
-    public static IServiceCollection RegisterCustomerModule(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection RegisterCatalogModule(this IServiceCollection services, IConfiguration configuration)
     {
         string? connectionString = configuration.GetConnectionString("eshop");
 

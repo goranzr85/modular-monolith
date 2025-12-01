@@ -33,6 +33,10 @@ var rabbitmq = builder.AddRabbitMQ("rabbitmq", rabbitMqUsername, rabbitMqPasswor
     .WithManagementPlugin();
 
 var keycloak = builder.AddKeycloak("keycloak", 8080)
+    .WithBindMount(
+        "./keycloak-config/eshop-realm-export.json",  
+        "/opt/keycloak/data/import/eshop-realm-export.json"
+    )
     .WithDataVolume()
     .WithExternalHttpEndpoints();
 

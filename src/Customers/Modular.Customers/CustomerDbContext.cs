@@ -1,10 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Modular.Common;
 using Modular.Common.User.Configuration;
 using Modular.Customers.Models;
 
 namespace Modular.Customers;
 
-public class CustomerDbContext : DbContext
+public sealed class CustomerDbContext : DbContext
 {
     internal static readonly string Schema = "Users";
 
@@ -13,10 +14,13 @@ public class CustomerDbContext : DbContext
     }
 
     public DbSet<Customer> Customers { get; set; }
+    public DbSet<OutboxMessage> OutboxMessages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
+
+        modelBuilder.ApplyConfiguration(new OutputMessageConfiguration());
 
         modelBuilder.Entity<Customer>(builder =>
         {

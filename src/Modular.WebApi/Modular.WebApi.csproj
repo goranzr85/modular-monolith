@@ -5,6 +5,9 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<GenerateRuntimeConfigurationFiles>True</GenerateRuntimeConfigurationFiles>
+		<UserSecretsId>17175e44-c949-4c1c-ac0b-5facdcd24fe9</UserSecretsId>
+		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+		<DockerfileContext>..\..</DockerfileContext>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -18,6 +21,7 @@
 		<PackageReference Include="Microsoft.CodeAnalysis.Common" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
 		<PackageReference Include="Quartz.Extensions.Hosting" />
 		<PackageReference Include="Swashbuckle.AspNetCore" />
 	</ItemGroup>
