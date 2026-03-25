@@ -8,6 +8,8 @@ It is created for learning purposes, and includes implementations of:
 - **Aspire**  
 - **Role-based Access Control (RBAC)**  
 - **Keycloak** integration  
+- **Compensate actions** 
+
 
 ---
 
@@ -16,4 +18,5 @@ It is created for learning purposes, and includes implementations of:
 - Integration tests using **Testcontainers**  
 - **CI/CD pipeline**  
 - **Architecture tests**
+- **Compensate actions**
 
