@@ -47,7 +47,7 @@ internal sealed class ManualProductStockDecreaseCommandHandler : IRequestHandler
         DecreasedProductQuantity productReceived = new(request.Sku, request.Quantity, request.Reason, DateTime.UtcNow);
         session.Events.Append(productReceived.Sku, productReceived);
 
-        await _publishEndpoint.Publish(new ProductQuantityDecreasedInWarehouseIntegrationEvent(request.Sku, request.Quantity), cancellationToken);
+        //await _publishEndpoint.Publish(new ProductQuantityDecreasedInWarehouseIntegrationEvent(request.Sku, request.Quantity), cancellationToken);
 
         await session.SaveChangesAsync(cancellationToken);
 

@@ -4,7 +4,6 @@ using MassTransit;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Modular.Warehouse.Errors;
-using Modular.Warehouse.IntegrationEvents;
 using Modular.Warehouse.Models;
 using Modular.Warehouse.SourceModels;
 
@@ -54,7 +53,7 @@ internal sealed class ProductShippingCommandHandler : IRequestHandler<ProductShi
         session.Events.Append(productShipped.Sku, productShipped);
         await session.SaveChangesAsync(cancellationToken);
 
-        await _publishEndpoint.Publish(new ProductShippedIntegrationEvent(request.Sku, request.Quantity, request.OrderId, occuredOnUtc), cancellationToken);
+        //await _publishEndpoint.Publish(new ProductShippedIntegrationEvent(request.Sku, request.Quantity, request.OrderId, occuredOnUtc), cancellationToken);
 
         _logger.LogDebug("Shipping product {Sku} with quantity {Quantity} succeeded.", request.Sku, request.Quantity);
         return Unit.Value;

@@ -6,9 +6,10 @@ public sealed class ProductQuantityIncreasedInWarehouseIntegrationEvent : IInteg
 {
     public string Sku { get; init; }
     public uint Quantity { get; init; }
+    public DateTimeOffset OccuredOnUtc { get; init; }
 
     public ProductQuantityIncreasedInWarehouseIntegrationEvent() { }
 
-    public ProductQuantityIncreasedInWarehouseIntegrationEvent(string sku, uint quantity)
-        => (Sku, Quantity) = (sku, quantity);
+    public ProductQuantityIncreasedInWarehouseIntegrationEvent(string sku, uint quantity, DateTimeOffset occuredOnUtc)
+        => (Sku, Quantity, OccuredOnUtc) = (sku, quantity, occuredOnUtc);
 }

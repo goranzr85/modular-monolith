@@ -1,7 +1,6 @@
 ﻿using ErrorOr;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using Modular.Orders.Errors;
 using Modular.Orders.UseCases.Orders.Models;

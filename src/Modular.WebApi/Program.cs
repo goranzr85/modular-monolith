@@ -52,7 +52,7 @@ builder.AddMassTransitRabbitMq("rabbitmq", options =>
     {
         consumers.SetKebabCaseEndpointNameFormatter();
         consumers.AddOrderConsumers();
-        consumers.AddWarehouseConsumers(builder.Configuration);
+        consumers.AddWarehouseConsumers(builder.Configuration, builder.Services);
         consumers.AddNotificationConsumers();
 
         consumers.AddConfigureEndpointsCallback((context, name, cfg) =>
