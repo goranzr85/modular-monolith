@@ -1,4 +1,15 @@
+
 var builder = DistributedApplication.CreateBuilder(args);
+
+var keycloak = builder.AddKeycloak("keycloak", 8080)
+    .WithBindMount(
+        "./keycloak-config/eshop-realm-export.json",
+        "/opt/keycloak/data/import/eshop-realm-export.json"
+    )
+    .WithArgs("--import-realm")
+    .WithDataVolume()
+    .WithExternalHttpEndpoints()
+    .WithLifetime(ContainerLifetime.Persistent);
 
 var username = builder.AddParameter(
     name: "postgres-username",
@@ -12,7 +23,8 @@ var password = builder.AddParameter(
 
 var postgres = builder
     .AddPostgres("postgres-db", username, password)
-    .WithPgAdmin();
+    .WithPgAdmin(c => c.WithLifetime(ContainerLifetime.Persistent))
+    .WithLifetime(ContainerLifetime.Persistent);
 
 var postgresDb = postgres
     .WithDataVolume()
@@ -30,15 +42,8 @@ var rabbitMqPassword = builder.AddParameter(
 
 var rabbitmq = builder.AddRabbitMQ("rabbitmq", rabbitMqUsername, rabbitMqPassword)
     .WithDataVolume()
-    .WithManagementPlugin();
-
-var keycloak = builder.AddKeycloak("keycloak", 8080)
-    .WithBindMount(
-        "./keycloak-config/eshop-realm-export.json",  
-        "/opt/keycloak/data/import/eshop-realm-export.json"
-    )
-    .WithDataVolume()
-    .WithExternalHttpEndpoints();
+    .WithManagementPlugin()
+    .WithLifetime(ContainerLifetime.Persistent);
 
 builder.AddProject<Projects.Modular_WebApi>("modular-webapi")
     .WithReference(postgresDb)
