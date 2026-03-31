@@ -6,7 +6,6 @@ var keycloak = builder.AddKeycloak("keycloak", 8080)
         "./keycloak-config/eshop-realm-export.json",
         "/opt/keycloak/data/import/eshop-realm-export.json"
     )
-    .WithArgs("--import-realm")
     .WithDataVolume()
     .WithExternalHttpEndpoints()
     .WithLifetime(ContainerLifetime.Persistent);
