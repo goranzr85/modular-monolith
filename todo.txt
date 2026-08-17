@@ -1,0 +1,231 @@
+Warehouse module (Products use cases) - code review recommendations
+=====================================================================
+Scope: src/Warehouse/Modular.Warehouse/UseCases/Products/** and related files
+       (OrderDbContext.cs, ServiceRegistration.cs, IntegrationEventPublisher.cs)
+
+CORRECTNESS ISSUES (fix first)
+-------------------------------
+1. Stock checks are never enforced before persisting the event.
+   ManualProductStockDecreaseCommandHandler and ProductShippingCommandHandler
+   append DecreasedProductQuantity / ProductShipped to the Marten stream without
+   checking product.Quantity >= request.Quantity first. The only guard is inside
+   Product.DecreaseQuantity(), called from Apply(...) during stream REPLAY - and
+   its ErrorOr result is discarded there (Product.cs:34-42). Result: you can
+   persist a "decreased by 100" event against a product with 10 in stock; the
+   event log will forever say the decrease happened, but every future replay
+   silently no-ops the quantity change. Fix: check the invariant in the command
+   handler BEFORE session.Events.Append(...), not just in Apply().
+
+2. [FIXED] ProductErrors.ProductAlreadyExist used Error.NotFound (404) - now
+   Error.Conflict (409). ProductErrors.NotEnoughQuantity() used Error.Validation
+   (400) - now also Error.Conflict (409), since it's a business-state conflict
+   (insufficient stock) rather than malformed input. Both now map correctly via
+   the ErrorType.Conflict case added to ErrorOrExtensions.ToResult as part of
+   #12's fix. Note: ProductAlreadyExist is still unused anywhere in Warehouse
+   (only defined) - ProductCreatedNotificationHandler checks for an existing
+   product but is a MassTransit IConsumer<T> (Task-returning), not an ErrorOr
+   command handler, so it just logs and returns instead of surfacing this error.
+
+3. [FIXED] ProductReceivingCommandHandler, ManualProductStockIncreaseCommand
+   Handler, and ManualProductStockDecreaseCommandHandler now inject TimeProvider
+   and call _dateTimeProvider.GetUtcNow() instead of DateTime.UtcNow, matching
+   ProductShippingCommandHandler and ProductCreatedNotificationHandler. All five
+   Product event handlers are now consistent and independently testable.
+   TimeProvider.System is already registered as a singleton in
+   Modular.WebApi/Program.cs, so no DI registration change was needed.
+
+4. [FIXED] IntegrationEventPublisher's switch silently dropped unmapped events
+   (IntegrationEventPublisher.cs, "_ => null"). ProductCreated and ProductDelisted
+   still aren't mapped (still intentional - no action needed there), but the
+   publisher now logs a warning naming the unmapped event's runtime type when
+   `message is null`, so a future missing case isn't mistaken for "not
+   implemented yet".
+
+CODE QUALITY / DUPLICATION
+---------------------------
+5. [FIXED] Four handlers (Receiving, Shipping, Decreased, Increased) repeated the
+   identical load/validate skeleton: open LightweightSession, AggregateStreamAsync
+   /FetchForWriting<Product>, null-check -> ProductNotFound, IsDelisted-check ->
+   ProductDelisted, log. Extracted into a shared IProductStreamStore
+   (UseCases/Products/ProductStreamStore.cs) with LoadAsync(session, sku, ct) for
+   the plain-aggregate case (Receiving/Increase) and LoadForWritingAsync(session,
+   sku, ct) for the FetchForWriting/concurrency case (Shipping/Decrease); both
+   delegate to a private Validate(Product?, sku) that does the not-found/delisted
+   check + logging once. Registered as AddScoped<IProductStreamStore,
+   ProductStreamStore>() in ServiceRegistration.cs. Create's handler was left
+   untouched - its check is inverted (verifies the product does NOT already
+   exist), so it doesn't share this skeleton.
+   HEADS-UP for future ErrorOr<T> usage with Marten types: returning an
+   IEventStream<Product> (interface type) from an ErrorOr<IEventStream<Product>>
+   method can't use the implicit TValue conversion operator - C# disallows
+   user-defined conversion operators where the source or target type is an
+   interface. Use ErrorOrFactory.From(value) instead (see LoadForWritingAsync).
+
+6. [FIXED] Removed dead code:
+   - Unused IPublishEndpoint field/param + commented-out Publish(...) lines in
+     Receiving, Shipping, Decreased, Increased handlers (publishing is actually
+     done via the Marten IntegrationEventPublisher subscription now). Also
+     dropped the now-unused `using MassTransit;` / `using
+     Modular.Warehouse.IntegrationEvents;` in those files.
+   - Large commented-out blocks in ServiceRegistration.cs (dead scope/consumer
+     setup, and a whole second commented-out AddMarten registration) - also
+     dropped the now-unused `using Marten.Events.Daemon.Resiliency;`.
+   - Commented-out constructor in IntegrationEventPublisher.cs.
+   - Drive-by: renamed the same stale `productReceived` variable name in
+     ManualProductStockIncreaseCommandHandler (copy-paste from Receiving,
+     same issue already fixed in the Decrease handler earlier).
+   - Drive-by: the two ConcurrencyException catch blocks added for #12 now log
+     the caught exception (`_logger.LogWarning(ex, ...)`) instead of swallowing
+     it - Sonar flagged this (S6667) once the surrounding noise was cleared.
+   All Warehouse-specific SonarAnalyzer warnings (S125, S4487, S6667) are gone;
+   solution builds with 0 errors.
+
+7. [FIXED] Added validators for ProductReceivingCommand, ProductShippingCommand,
+   ManualProductStockIncrease/DecreaseCommand (Sku NotEmpty, Quantity
+   GreaterThan(0), Reason NotEmpty where applicable), colocated in the same file
+   as their command/handler per the project's convention.
+   IMPORTANT DISCOVERY while doing this: FluentValidation validators in this
+   codebase were never actually wired into the MediatR pipeline anywhere - no
+   IPipelineBehavior, no AddFluentValidation, nothing. Catalog's
+   ChangeProductCommandValidator and Customers' Create/ChangeCustomerCommand
+   Validator existed but silently did nothing (dead code) before this fix. Asked
+   the user how to handle this; chose to fix it properly rather than add more
+   dead validators to Warehouse. Changes made (touches beyond Warehouse):
+   - Added Modular.Common.Behaviors.ValidationBehavior<TRequest,TResponse>
+     (src/Common/Modular.Common/Behaviors/ValidationBehavior.cs): a MediatR
+     IPipelineBehavior that resolves IEnumerable<IValidator<TRequest>>, runs
+     them, and on failure returns a List<Error> converted to TResponse via a
+     `(dynamic)errors` cast (works because ErrorOr<TValue> has an implicit
+     operator from List<Error>, and dynamic dispatch resolves it at runtime per
+     concrete TResponse - the standard pattern for MediatR + ErrorOr since
+     generic constraints can't express "has an implicit conversion from
+     List<Error>"). Only converts when typeof(TResponse) implements the
+     non-generic IErrorOr marker interface, so non-ErrorOr requests pass through
+     untouched.
+   - Registered once, globally: builder.Services.AddTransient(typeof(
+     IPipelineBehavior<,>), typeof(ValidationBehavior<,>)) in
+     Modular.WebApi/Program.cs. This applies to every module's MediatR requests
+     (all modules share one composed DI container/mediator), not just Warehouse.
+   - Added services.AddValidatorsFromAssembly(typeof(ServiceRegistration).Assembly)
+     to Catalog, Customers, and Warehouse ServiceRegistration.cs so IValidator<T>
+     implementations are actually discoverable in DI (they weren't registered
+     anywhere before either).
+   - Added Modular.Common project references to MediatR + FluentValidation
+     (needed by ValidationBehavior itself).
+   - Added the FluentValidation.DependencyInjectionExtensions package (11.8.0,
+     matching the pinned FluentValidation version) - AddValidatorsFromAssembly
+     lives there, not in the main FluentValidation package, at this version.
+   SIDE EFFECT / HEADS-UP: this switches ON validation for Catalog's
+   ChangeProductCommand (Sku/Name/Description NotEmpty, Price > 0) and both
+   Customers commands, which previously silently accepted anything. If any
+   existing caller relies on previously-unvalidated input reaching those
+   handlers, it will now get a 400 instead. Not expected to be an issue (the
+   rules are exactly what those validators already declared), but flagging it
+   since it's a real behavior change outside Warehouse.
+   ALSO FIXED (drive-by, discovered while touching these csproj files): Catalog's
+   and Customers' .csproj referenced a package literally named "FluentValidator"
+   (no "ion" - a different, unrelated, unmaintained "Notification Pattern"
+   library by a different author, unused in the actual code) instead of the real
+   "FluentValidation" package. It never broke the build only because Carter
+   transitively pulls in the real FluentValidation package anyway. Fixed Catalog's
+   reference to point to "FluentValidation", removed the redundant stray
+   reference from Customers (which already had the correct one too), and removed
+   the now-unused "FluentValidator" PackageVersion from Directory.Packages.props.
+
+8. [FIXED] ManualProductStockDecreasedEndpoint and ManualProductStockIncreased
+   Endpoint both hardcoded .WithTags("Warehouse") instead of Constants.EndpointTag
+   (used by ProductReceivingEndpoint/ProductShippingEndpoint). Both switched to
+   Constants.EndpointTag - same value, now consistent across all four endpoints.
+
+9. [FIXED] Product.Sku / Product.Name were non-nullable string with no
+   initializer or constructor (Product.cs:12-13), which warns under Nullable
+   enable. Marked both `required` - Product is only ever built by Marten's
+   Apply(...)-based aggregation (no public constructor call), so `required`
+   satisfies the compiler without a meaningless default.
+
+12. [FIXED] Stock-check fix for #1 closed the sequential case but not the
+    concurrent one. session.Events.Append(...) was called with no expected-
+    version/optimistic-concurrency check, so two concurrent requests against the
+    same SKU could both pass the in-memory DecreaseQuantity check before either
+    appended, both persist their event, and the second would silently no-op on
+    the next replay (same divergence #1 was meant to eliminate).
+    Fix applied: ManualProductStockDecreaseCommandHandler and
+    ProductShippingCommandHandler now use session.Events.FetchForWriting<Product>
+    (Marten.Events.IEventStream<T>) instead of AggregateStreamAsync + Append.
+    FetchForWriting captures the stream's version at read time and
+    SaveChangesAsync enforces it, throwing Marten.Exceptions.ConcurrencyException
+    on a lost-update race; both handlers now catch that and return the new
+    ProductErrors.ConcurrentModification(sku) (Error.Conflict) instead of letting
+    a concurrent write silently corrupt state.
+    Also fixed as part of this: ErrorType.Conflict had no case in
+    Modular.Common.ErrorOrExtensions.ToResult (src/Common/Modular.Common/
+    ErrorOrExtensions.cs) - it fell through to a generic 500 with no detail.
+    Added an explicit 409 mapping so Conflict errors (this one, and any future
+    ones) surface correctly to API clients.
+    Not changed: ProductReceivingCommandHandler, ManualProductStockIncrease
+    CommandHandler, ProductCreatedNotificationHandler - their operations are
+    additive/commutative (or start a new stream), so concurrent appends don't
+    violate any invariant and don't need the same guard.
+
+PERFORMANCE
+-----------
+10. [FIXED] Full stream replay on every command. AggregateStreamAsync<Product>
+    used to live-aggregate the ENTIRE event stream for a SKU on every
+    receive/ship/adjust call. Fixed by registering Product as a Marten inline
+    snapshot projection: opts.Projections.Snapshot<Product>(SnapshotLifecycle.
+    Inline) in ServiceRegistration.cs's AddMarten config. Marten now keeps a
+    Product document up to date synchronously inside the same SaveChangesAsync
+    that appends events, so reads go through session.LoadAsync<Product>(sku)
+    (a direct document-by-id fetch) instead of event replay:
+    - IProductStreamStore.LoadAsync (Receiving/Increase) now calls
+      session.LoadAsync<Product> instead of AggregateStreamAsync.
+    - IProductStreamStore.LoadForWritingAsync (Shipping/Decrease) now loads the
+      Product via session.LoadAsync<Product> for validation/domain logic, and
+      separately calls session.Events.FetchForWriting<Product> purely to get
+      the version-tracked IEventStream<Product> handle for the concurrency-
+      checked append - its .Aggregate is no longer read. Both are bundled into
+      a new ProductWriteContext(Product, IEventStream<Product>) record so
+      handlers get everything they need from one store call. This is a
+      deliberate two-round-trip trade (cheap document read + cheap stream-
+      version read) in exchange for decoupling "read current state" from "get
+      a write handle" - optimistic concurrency itself is unaffected, since
+      Marten still checks the version captured by FetchForWriting at
+      SaveChangesAsync time.
+    - ProductCreatedNotificationHandler's existence-check also switched from
+      AggregateStreamAsync to session.LoadAsync<Product> for consistency (and
+      now threads context.CancellationToken through, which it didn't before).
+    KNOWN LIMITATION (accepted, not fixed): inline snapshots only get
+    (re)built on a stream's NEXT write after this shipped. Any SKU that
+    already had events in the DB before this change won't have a projected
+    document until it's touched again - a LoadAsync for such a SKU would
+    incorrectly report not-found until then. Accepted as-is since this is a
+    dev/reference project (no rebuild-on-startup step was added); revisit if
+    this ever needs to run against data that must survive the migration.
+
+11. IntegrationEventPublisher.ProcessEventsAsync creates one DI scope per page
+    of events (not per event) - already reasonably batched, no action needed.
+
+NEXT STEPS (suggested order)
+-----------------------------
+[x] Fix #1 (stock-check invariant) - highest risk, silent data inconsistency
+    (closes the sequential case; #12 below tracks the remaining concurrent gap)
+[x] Rename stale `productReceived` var to `productDecreased` in
+    ManualProductStockDecreaseCommandHandler.cs (copy-paste leftover, found
+    during review of the #1 fix)
+[x] Fix #12 (optimistic concurrency on Marten event append) - remaining gap
+    left by #1, could reproduce the same silent divergence under concurrent load
+[x] Fix #2 (Conflict vs NotFound/Validation error types - ProductAlreadyExist
+    and NotEnoughQuantity)
+[x] Clean up dead code (#6)
+[x] Standardize TimeProvider usage (#3)
+[x] Add validators (#7) - plus wired up the previously-dead MediatR validation
+    pipeline (see #7 notes) so validators actually run, in Warehouse and
+    everywhere else that had them
+[x] Log unmapped domain events in IntegrationEventPublisher (#4)
+[x] Fix endpoint tag drift on Increase/Decrease endpoints (#8)
+[x] Fix Product.Sku/Name nullable warning via `required` (#9)
+[x] Extract shared load/validate helper (#5) - IProductStreamStore, used by
+    Receiving/Shipping/Increase/Decrease handlers
+[ ] Evaluate Marten snapshotting if event volume per SKU grows (#10) - not
+    actionable without evidence of a real perf problem, left as a future
+    consideration only

@@ -17,6 +17,7 @@ public static class ErrorOrExtensions
         {
             ErrorType.Validation => Results.Problem(statusCode: 400, title: "Bad Request", detail: response.FirstError.Description),
             ErrorType.NotFound => Results.Problem(statusCode: 404, title: "Not Found", detail: response.FirstError.Description),
+            ErrorType.Conflict => Results.Problem(statusCode: 409, title: "Conflict", detail: response.FirstError.Description),
             ErrorType.Failure => Results.Problem(statusCode: 500, detail: response.FirstError.Description),
             _ => Results.Problem(statusCode: 500, title: "Server Error", detail: "An unexpected error occurred.")
         };

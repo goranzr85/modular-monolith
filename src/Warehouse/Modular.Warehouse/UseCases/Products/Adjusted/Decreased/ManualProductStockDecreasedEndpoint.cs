@@ -9,6 +9,7 @@ using Modular.Common;
 using Modular.Warehouse.Authorization;
 
 namespace Modular.Warehouse.UseCases.Products.Adjusted.Decreased;
+
 public sealed class ManualProductStockDecreasedEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
@@ -22,7 +23,7 @@ public sealed class ManualProductStockDecreasedEndpoint : ICarterModule
             return response.ToResult(_ => Results.NoContent());
         })
         .WithName("ManuallyDecreaseProduct")
-        .WithTags("Warehouse")
+        .WithTags(Constants.EndpointTag)
         .Produces(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status500InternalServerError)
         .Produces(StatusCodes.Status200OK)

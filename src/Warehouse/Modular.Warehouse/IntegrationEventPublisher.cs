@@ -4,6 +4,7 @@ using Marten.Events.Daemon.Internals;
 using Marten.Subscriptions;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Modular.Common.Events;
 using Modular.Warehouse.IntegrationEvents;
 using Modular.Warehouse.SourceModels;
@@ -18,20 +19,13 @@ internal sealed class IntegrationEventPublisher : SubscriptionBase
         _serviceProvider = serviceProvider;
     }
 
-
-    //private readonly IPublishEndpoint _publishEndpoint;
-
-    //public IntegrationEventPublisher(IPublishEndpoint publishEndpoint)
-    //{
-    //    _publishEndpoint = publishEndpoint;
-    //}
-
     public override async Task<IChangeListener> ProcessEventsAsync(EventRange page, ISubscriptionController controller,
         IDocumentOperations operations, CancellationToken cancellationToken)
     {
         using var scope = _serviceProvider.CreateScope();
 
         var publishEndpoint = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<IntegrationEventPublisher>>();
 
         foreach (var @event in page.Events)
         {
@@ -67,6 +61,10 @@ internal sealed class IntegrationEventPublisher : SubscriptionBase
             if (message is not null)
             {
                 await publishEndpoint.Publish(message, cancellationToken);
+            }
+            else
+            {
+                logger.LogWarning("No integration event mapping found for domain event {EventType}; nothing was published.", @event.Data.GetType().Name);
             }
         }
 

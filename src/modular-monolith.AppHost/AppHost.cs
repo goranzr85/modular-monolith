@@ -1,9 +1,22 @@
+﻿var builder = DistributedApplication.CreateBuilder(args);
 
-var builder = DistributedApplication.CreateBuilder(args);
+// Pomoćna funkcija koja konvertuje Windows C:\ putanje u WSL /mnt/c/ format
+static string ToWslPath(string path)
+{
+    var fullPath = Path.GetFullPath(path);
+    if (fullPath.StartsWith("/mnt/") || fullPath.StartsWith("/"))
+    {
+        return fullPath;
+    }
+
+    var driveLetter = char.ToLowerInvariant(fullPath[0]);
+    var relativePath = fullPath.Substring(3).Replace('\\', '/');
+    return $"/mnt/{driveLetter}/{relativePath}";
+}
 
 var keycloak = builder.AddKeycloak("keycloak", 8080)
     .WithBindMount(
-        "./keycloak-config/eshop-realm-export.json",
+        ToWslPath("./keycloak-config/eshop-realm-export.json"),
         "/opt/keycloak/data/import/eshop-realm-export.json"
     )
     .WithDataVolume()

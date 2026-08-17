@@ -7,7 +7,7 @@
 	<ItemGroup>
 		<PackageReference Include="Aspire.Keycloak.Authentication" />
 		<PackageReference Include="FluentValidation" />
-		<PackageReference Include="FluentValidator" />
+		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
 		<PackageReference Include="MediatR" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" />
 		<PackageReference Include="Carter" />

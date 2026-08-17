@@ -4,13 +4,13 @@ using MediatR;
 using Modular.Warehouse.Errors;
 using Modular.Warehouse.SourceModels;
 
-namespace Modular.Warehouse.Models;
+namespace Modular.Warehouse.UseCases.Products.Models;
 
 public sealed class Product
 {
     [Identity]
-    public string Sku { get; set; }
-    public string Name { get; set; }
+    public required string Sku { get; set; }
+    public required string Name { get; set; }
     public uint Quantity { get; set; }
     public bool IsDelisted { get; set; }
 

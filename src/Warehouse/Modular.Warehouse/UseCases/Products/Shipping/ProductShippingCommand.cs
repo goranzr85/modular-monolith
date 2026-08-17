@@ -1,32 +1,43 @@
 ﻿using ErrorOr;
+using FluentValidation;
 using Marten;
-using MassTransit;
+using Marten.Events;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Modular.Warehouse.Errors;
-using Modular.Warehouse.Models;
 using Modular.Warehouse.SourceModels;
+using Modular.Warehouse.UseCases.Products.Models;
 
 namespace Modular.Warehouse.UseCases.Products.Shipping;
+
+internal sealed class ProductShippingCommandValidator : AbstractValidator<ProductShippingCommand>
+{
+    public ProductShippingCommandValidator()
+    {
+        RuleFor(x => x.Sku).NotEmpty();
+        RuleFor(x => x.Quantity).GreaterThan(0u);
+        RuleFor(x => x.OrderId).NotEmpty();
+    }
+}
 
 internal sealed record ProductShippingCommand(string Sku, uint Quantity, Guid OrderId) : IRequest<ErrorOr<Unit>>;
 
 internal sealed class ProductShippingCommandHandler : IRequestHandler<ProductShippingCommand, ErrorOr<Unit>>
 {
     private readonly IDocumentStore _documentStore;
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IProductStreamStore _productStreamStore;
     private readonly TimeProvider _dateTimeProvider;
     private readonly ILogger<ProductShippingCommandHandler> _logger;
 
     public ProductShippingCommandHandler(IDocumentStore documentStore,
+        IProductStreamStore productStreamStore,
         ILogger<ProductShippingCommandHandler> logger,
-        TimeProvider dateTimeProvider,
-        IPublishEndpoint publishEndpoint)
+        TimeProvider dateTimeProvider)
     {
         _documentStore = documentStore;
+        _productStreamStore = productStreamStore;
         _logger = logger;
         _dateTimeProvider = dateTimeProvider;
-        _publishEndpoint = publishEndpoint;
     }
 
     public async Task<ErrorOr<Unit>> Handle(ProductShippingCommand request, CancellationToken cancellationToken)
@@ -34,26 +45,34 @@ internal sealed class ProductShippingCommandHandler : IRequestHandler<ProductShi
         _logger.LogInformation("Shipping product {Sku} with quantity {Quantity}.", request.Sku, request.Quantity);
 
         await using var session = _documentStore.LightweightSession();
-        Product? product = await session.Events.AggregateStreamAsync<Product>(request.Sku, token: cancellationToken);
-
-        if (product is null)
+        ErrorOr<ProductWriteContext> writeContextResult = await _productStreamStore.LoadForWritingAsync(session, request.Sku, cancellationToken);
+        if (writeContextResult.IsError)
         {
-            _logger.LogWarning("Product with SKU: {Sku} does not exist", request.Sku);
-            return ProductErrors.ProductNotFound(request.Sku);
+            return writeContextResult.Errors;
         }
 
-        if (product.IsDelisted)
+        (Product product, IEventStream<Product> stream) = writeContextResult.Value;
+
+        ErrorOr<Unit> decreaseResult = product.DecreaseQuantity(request.Quantity);
+        if (decreaseResult.IsError)
         {
-            _logger.LogWarning("Product with SKU: {Sku} is delisted", request.Sku);
-            return ProductErrors.ProductDelisted(request.Sku);
+            _logger.LogWarning("Product with SKU: {Sku} does not have enough quantity ({CurrentQuantity}) to ship {Quantity}.", request.Sku, product.Quantity, request.Quantity);
+            return decreaseResult;
         }
 
         DateTimeOffset occuredOnUtc = _dateTimeProvider.GetUtcNow();
         ProductShipped productShipped = new(request.Sku, request.Quantity, occuredOnUtc);
-        session.Events.Append(productShipped.Sku, productShipped);
-        await session.SaveChangesAsync(cancellationToken);
+        stream.AppendOne(productShipped);
 
-        //await _publishEndpoint.Publish(new ProductShippedIntegrationEvent(request.Sku, request.Quantity, request.OrderId, occuredOnUtc), cancellationToken);
+        try
+        {
+            await session.SaveChangesAsync(cancellationToken);
+        }
+        catch (Marten.Exceptions.ConcurrencyException ex)
+        {
+            _logger.LogWarning(ex, "Product with SKU: {Sku} was modified concurrently while shipping quantity {Quantity}.", request.Sku, request.Quantity);
+            return ProductErrors.ConcurrentModification(request.Sku);
+        }
 
         _logger.LogDebug("Shipping product {Sku} with quantity {Quantity} succeeded.", request.Sku, request.Quantity);
         return Unit.Value;

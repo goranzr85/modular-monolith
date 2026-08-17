@@ -1,28 +1,37 @@
 ﻿using ErrorOr;
+using FluentValidation;
 using Marten;
-using MassTransit;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using Modular.Warehouse.Errors;
-using Modular.Warehouse.IntegrationEvents;
-using Modular.Warehouse.Models;
 using Modular.Warehouse.SourceModels;
+using Modular.Warehouse.UseCases.Products.Models;
 
 namespace Modular.Warehouse.UseCases.Products.Receiving;
+
+internal sealed class ProductReceivingCommandValidator : AbstractValidator<ProductReceivingCommand>
+{
+    public ProductReceivingCommandValidator()
+    {
+        RuleFor(x => x.Sku).NotEmpty();
+        RuleFor(x => x.Quantity).GreaterThan(0u);
+    }
+}
 
 internal sealed record ProductReceivingCommand(string Sku, uint Quantity) : IRequest<ErrorOr<Unit>>;
 
 internal sealed class ProductReceivingCommandHandler : IRequestHandler<ProductReceivingCommand, ErrorOr<Unit>>
 {
     private readonly IDocumentStore _documentStore;
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IProductStreamStore _productStreamStore;
+    private readonly TimeProvider _dateTimeProvider;
     private readonly ILogger<ProductReceivingCommandHandler> _logger;
 
-    public ProductReceivingCommandHandler(IDocumentStore documentStore, ILogger<ProductReceivingCommandHandler> logger, IPublishEndpoint publishEndpoint)
+    public ProductReceivingCommandHandler(IDocumentStore documentStore, IProductStreamStore productStreamStore, ILogger<ProductReceivingCommandHandler> logger, TimeProvider dateTimeProvider)
     {
         _documentStore = documentStore;
+        _productStreamStore = productStreamStore;
         _logger = logger;
-        _publishEndpoint = publishEndpoint;
+        _dateTimeProvider = dateTimeProvider;
     }
 
     public async Task<ErrorOr<Unit>> Handle(ProductReceivingCommand request, CancellationToken cancellationToken)
@@ -30,24 +39,14 @@ internal sealed class ProductReceivingCommandHandler : IRequestHandler<ProductRe
         _logger.LogInformation("Receiving product {Sku} with quantity {Quantity}.", request.Sku, request.Quantity);
 
         await using var session = _documentStore.LightweightSession();
-        Product? product = await session.Events.AggregateStreamAsync<Product>(request.Sku, token: cancellationToken);
-
-        if (product is null)
+        ErrorOr<Product> productResult = await _productStreamStore.LoadAsync(session, request.Sku, cancellationToken);
+        if (productResult.IsError)
         {
-            _logger.LogWarning("Product with SKU: {Sku} does not exist", request.Sku);
-            return ProductErrors.ProductNotFound(request.Sku);
+            return productResult.Errors;
         }
 
-        if (product.IsDelisted)
-        {
-            _logger.LogWarning("Product with SKU: {Sku} is delisted", request.Sku);
-            return ProductErrors.ProductDelisted(request.Sku);
-        }
-
-        ProductReceived productReceived = new(request.Sku, request.Quantity, DateTime.UtcNow);
+        ProductReceived productReceived = new(request.Sku, request.Quantity, _dateTimeProvider.GetUtcNow());
         session.Events.Append(productReceived.Sku, productReceived);
-
-        //await _publishEndpoint.Publish(new ProductQuantityIncreasedInWarehouseIntegrationEvent(request.Sku, request.Quantity), cancellationToken);
 
         await session.SaveChangesAsync(cancellationToken);
 

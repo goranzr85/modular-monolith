@@ -22,7 +22,7 @@ public sealed class ManualProductStockIncreasedEndpoint : ICarterModule
             return response.ToResult(_ => Results.NoContent());
         })
         .WithName("ManuallyIncreaseProduct")
-        .WithTags("Warehouse")
+        .WithTags(Constants.EndpointTag)
         .Produces(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status500InternalServerError)
         .Produces(StatusCodes.Status200OK)

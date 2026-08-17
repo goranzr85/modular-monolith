@@ -1,28 +1,40 @@
 ﻿using ErrorOr;
+using FluentValidation;
 using Marten;
-using MassTransit;
+using Marten.Events;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Modular.Warehouse.Errors;
-using Modular.Warehouse.IntegrationEvents;
-using Modular.Warehouse.Models;
 using Modular.Warehouse.SourceModels;
+using Modular.Warehouse.UseCases.Products.Models;
 
 namespace Modular.Warehouse.UseCases.Products.Adjusted.Decreased;
+
+internal sealed class ManualProductStockDecreaseCommandValidator : AbstractValidator<ManualProductStockDecreaseCommand>
+{
+    public ManualProductStockDecreaseCommandValidator()
+    {
+        RuleFor(x => x.Sku).NotEmpty();
+        RuleFor(x => x.Quantity).GreaterThan(0u);
+        RuleFor(x => x.Reason).NotEmpty();
+    }
+}
 
 internal sealed record ManualProductStockDecreaseCommand(string Sku, uint Quantity, string Reason) : IRequest<ErrorOr<Unit>>;
 
 internal sealed class ManualProductStockDecreaseCommandHandler : IRequestHandler<ManualProductStockDecreaseCommand, ErrorOr<Unit>>
 {
     private readonly IDocumentStore _documentStore;
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IProductStreamStore _productStreamStore;
+    private readonly TimeProvider _dateTimeProvider;
     private readonly ILogger<ManualProductStockDecreaseCommandHandler> _logger;
 
-    public ManualProductStockDecreaseCommandHandler(IDocumentStore documentStore, ILogger<ManualProductStockDecreaseCommandHandler> logger, IPublishEndpoint publishEndpoint)
+    public ManualProductStockDecreaseCommandHandler(IDocumentStore documentStore, IProductStreamStore productStreamStore, ILogger<ManualProductStockDecreaseCommandHandler> logger, TimeProvider dateTimeProvider)
     {
         _documentStore = documentStore;
+        _productStreamStore = productStreamStore;
         _logger = logger;
-        _publishEndpoint = publishEndpoint;
+        _dateTimeProvider = dateTimeProvider;
     }
 
     public async Task<ErrorOr<Unit>> Handle(ManualProductStockDecreaseCommand request, CancellationToken cancellationToken)
@@ -30,26 +42,33 @@ internal sealed class ManualProductStockDecreaseCommandHandler : IRequestHandler
         _logger.LogInformation("Decreasing product {Sku} for quantity {Quantity}. Reason: {Reason}.", request.Sku, request.Quantity, request.Reason);
 
         await using var session = _documentStore.LightweightSession();
-        Product? product = await session.Events.AggregateStreamAsync<Product>(request.Sku, token: cancellationToken);
-
-        if (product is null)
+        ErrorOr<ProductWriteContext> writeContextResult = await _productStreamStore.LoadForWritingAsync(session, request.Sku, cancellationToken);
+        if (writeContextResult.IsError)
         {
-            _logger.LogWarning("Product with SKU: {Sku} does not exist", request.Sku);
-            return ProductErrors.ProductNotFound(request.Sku);
+            return writeContextResult.Errors;
         }
 
-        if (product.IsDelisted)
+        (Product product, IEventStream<Product> stream) = writeContextResult.Value;
+
+        ErrorOr<Unit> decreaseResult = product.DecreaseQuantity(request.Quantity);
+        if (decreaseResult.IsError)
         {
-            _logger.LogWarning("Product with SKU: {Sku} is delisted", request.Sku);
-            return ProductErrors.ProductDelisted(request.Sku);
+            _logger.LogWarning("Product with SKU: {Sku} does not have enough quantity ({CurrentQuantity}) to decrease by {Quantity}.", request.Sku, product.Quantity, request.Quantity);
+            return decreaseResult;
         }
 
-        DecreasedProductQuantity productReceived = new(request.Sku, request.Quantity, request.Reason, DateTime.UtcNow);
-        session.Events.Append(productReceived.Sku, productReceived);
+        DecreasedProductQuantity productDecreased = new(request.Sku, request.Quantity, request.Reason, _dateTimeProvider.GetUtcNow());
+        stream.AppendOne(productDecreased);
 
-        //await _publishEndpoint.Publish(new ProductQuantityDecreasedInWarehouseIntegrationEvent(request.Sku, request.Quantity), cancellationToken);
-
-        await session.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await session.SaveChangesAsync(cancellationToken);
+        }
+        catch (Marten.Exceptions.ConcurrencyException ex)
+        {
+            _logger.LogWarning(ex, "Product with SKU: {Sku} was modified concurrently while decreasing quantity by {Quantity}.", request.Sku, request.Quantity);
+            return ProductErrors.ConcurrentModification(request.Sku);
+        }
 
         _logger.LogDebug("Decreasing product {Sku} for quantity {Quantity} succeeded.", request.Sku, request.Quantity);
         return Unit.Value;

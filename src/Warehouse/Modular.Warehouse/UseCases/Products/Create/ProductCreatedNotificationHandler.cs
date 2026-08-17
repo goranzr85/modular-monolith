@@ -2,8 +2,8 @@
 using MassTransit;
 using Microsoft.Extensions.Logging;
 using Modular.Catalog.IntegrationEvents;
-using Modular.Warehouse.Models;
 using Modular.Warehouse.SourceModels;
+using Modular.Warehouse.UseCases.Products.Models;
 
 namespace Modular.Warehouse.UseCases.Products.Create;
 
@@ -26,7 +26,7 @@ internal sealed class ProductCreatedNotificationHandler : IConsumer<ProductCreat
         _logger.LogInformation("Creating product {Sku}.", sku);
 
         await using var session = _documentStore.LightweightSession();
-        Product? product = await session.Events.AggregateStreamAsync<Product>(sku);
+        Product? product = await session.LoadAsync<Product>(sku, context.CancellationToken);
 
         if (product is not null)
         {

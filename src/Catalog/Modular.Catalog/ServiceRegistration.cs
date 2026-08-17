@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Modular.Common;
@@ -26,6 +27,7 @@ public static class ServiceRegistration
         });
 
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(ServiceRegistration).Assembly));
+        services.AddValidatorsFromAssembly(typeof(ServiceRegistration).Assembly);
 
         return services;
     }
