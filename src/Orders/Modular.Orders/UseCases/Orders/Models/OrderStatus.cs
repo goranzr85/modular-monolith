@@ -29,7 +29,7 @@ internal sealed class PendingStatus : OrderStatus
 
     internal override ErrorOr<Unit> ChangeStatus(Order order, OrderStatus status)
     {
-        if (status is not SubmittedStatus or CanceledStatus)
+        if (status is not (SubmittedStatus or CanceledStatus))
         {
             return OrderErrors.OrderStatusIllegalTransition(order.Id, this, status);
         }
@@ -49,7 +49,7 @@ internal sealed class SubmittedStatus : OrderStatus
 
     internal override ErrorOr<Unit> ChangeStatus(Order order, OrderStatus status)
     {
-        if (status is not ShippedOrderStatus or CanceledStatus)
+        if (status is not (ShippedOrderStatus or CanceledStatus))
         {
             return OrderErrors.OrderStatusIllegalTransition(order.Id, this, status);
         }

@@ -37,7 +37,7 @@ public sealed class Order : AggregateRoot
             throw new ArgumentException("OrderId cannot be empty.", nameof(orderId));
         }
 
-        if (orderDate == DateTime.MinValue)
+        if (orderDate == DateTimeOffset.MinValue)
         {
             throw new ArgumentException("OrderDate cannot be empty.", nameof(orderDate));
         }
@@ -180,14 +180,14 @@ public sealed class Order : AggregateRoot
             return OrderErrors.ProductIsNotPlaced(Id, productSku);
         }
 
-        if (orderItem.ShippedStatus == ProductShippedStatus.Shipped)
+        if (orderItem.ShippedStatus.IsShipped)
         {
             return OrderErrors.ProductAlreadyShipped(Id, productSku);
         }
 
         orderItem.MarkAsShipped();
 
-        if (Items.All(i => i.ShippedStatus is ShippedStatus))
+        if (Items.All(i => i.ShippedStatus.IsShipped))
         {
             ChangeStatus(OrderStatus.Shipped);
             ShippedDate = DateTimeOffset.UtcNow;

@@ -23,7 +23,7 @@ internal sealed class OrderCreatedEventHandler : IConsumer<OrderCreatedEvent>
         await using var transaction = await _orderDbContext.Database.BeginTransactionAsync();
 
         Product[] products = await _orderDbContext.Products
-            .FromSqlInterpolated($"SELECT * FROM Products WHERE Id IN ({string.Join(",", productIds)}) FOR UPDATE")
+            .FromSqlInterpolated($"SELECT * FROM \"Orders\".\"Products\" WHERE \"Id\" IN ({string.Join(",", productIds)}) FOR UPDATE")
             .ToArrayAsync();
 
         foreach (OrderItem orderItem in context.Message.OrderItems)
