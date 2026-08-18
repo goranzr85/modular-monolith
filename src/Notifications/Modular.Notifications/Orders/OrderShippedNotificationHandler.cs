@@ -1,5 +1,6 @@
 ﻿using MassTransit;
 using Modular.Orders.Integrations;
+using Newtonsoft.Json;
 
 namespace Modular.Notifications.Orders;
 internal sealed class OrderShippedNotificationHandler : IConsumer<OrderShippedIntegrationEvent>
@@ -19,7 +20,10 @@ internal sealed class OrderShippedNotificationHandler : IConsumer<OrderShippedIn
         {
             Id = Guid.NewGuid(),
             MessageType = nameof(OrderShippedIntegrationEvent),
-            Payload = System.Text.Json.JsonSerializer.Serialize(context.Message),
+            Payload = JsonConvert.SerializeObject(context.Message, new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.All
+            }),
             ReceivedAt = _dateTimeProvider.GetUtcNow(),
         };
 

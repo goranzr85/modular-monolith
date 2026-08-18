@@ -8,6 +8,7 @@ using Modular.Catalog;
 using Modular.Catalog.Infrastructure;
 using Modular.Common.Behaviors;
 using Modular.Customers;
+using Modular.Customers.Infrastructure;
 using Modular.Notifications;
 using Modular.Notifications.Infrastructure;
 using Modular.Orders;
@@ -21,7 +22,9 @@ builder.AddServiceDefaults();
 
 builder.Services.AddSwagger(builder.Configuration);
 
-builder.Services.RegisterCustomerModule(builder.Configuration);
+builder.Services
+    .RegisterCustomerModule(builder.Configuration)
+    .RegisterCustomersBackgroundJobs();
 builder.Services
     .RegisterCatalogModule(builder.Configuration)
     .RegisterCatalogsBackgroundJobs();

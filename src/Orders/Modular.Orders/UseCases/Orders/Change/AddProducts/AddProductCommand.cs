@@ -28,7 +28,6 @@ internal sealed class AddProductCommandHandler : IRequestHandler<AddProductComma
 
         Order? order = await _orderDbContext.Orders
             .Include(x => x.Items)
-            .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == request.OrderId, cancellationToken);
         
         if (order is null)
@@ -41,7 +40,7 @@ internal sealed class AddProductCommandHandler : IRequestHandler<AddProductComma
         try
         {
             var product = await _orderDbContext.Products
-              .FromSqlRaw("SELECT StockQuantity FROM Products WHERE Id = {0} FOR UPDATE", request.ProductId)
+              .FromSqlRaw("SELECT \"StockQuantity\" FROM \"Orders\".\"Products\" WHERE \"Id\" = {0} FOR UPDATE", request.ProductId)
               .Select(p => new { p.StockQuantity })
               .FirstOrDefaultAsync(cancellationToken);
 

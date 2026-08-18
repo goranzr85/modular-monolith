@@ -20,7 +20,7 @@ public static class ServiceRegistration
     public static IServiceCollection AddWarehouse(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(ServiceRegistration).Assembly));
-        services.AddValidatorsFromAssembly(typeof(ServiceRegistration).Assembly);
+        services.AddValidatorsFromAssembly(typeof(ServiceRegistration).Assembly, includeInternalTypes: true);
 
         string? connectionString = configuration.GetConnectionString("eshop");
 
