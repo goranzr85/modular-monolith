@@ -1,8 +1,9 @@
 ﻿using Carter;
 using FluentValidation;
+using JasperFx;
+using JasperFx.Events;
+using JasperFx.Events.Projections;
 using Marten;
-using Marten.Events;
-using Marten.Events.Projections;
 using MassTransit;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -66,7 +67,7 @@ public static class ServiceRegistration
 
             opts.Projections.Subscribe(publisher, projectionOpts =>
             {
-                projectionOpts.SubscriptionName = "IntegrationEvents";
+                projectionOpts.Name = "IntegrationEvents";
             });
 
             opts.Projections.Snapshot<Product>(SnapshotLifecycle.Inline);

@@ -1,6 +1,6 @@
 using ErrorOr;
+using JasperFx.Events;
 using Marten;
-using Marten.Events;
 using Microsoft.Extensions.Logging;
 using Modular.Warehouse.Errors;
 using Modular.Warehouse.UseCases.Products.Models;

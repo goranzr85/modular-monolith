@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using OrderConstants = Modular.Orders.UseCases.Common.Constants;
 using CustomerConstants = Modular.Customers.Constants;
 using WarehouseConstants = Modular.Warehouse.Constants;
@@ -95,22 +95,13 @@ public static class SwaggerConfiguration
 
             o.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, securityScheme);
 
-            var securityRequirement = new OpenApiSecurityRequirement
+            o.AddSecurityRequirement(document => new OpenApiSecurityRequirement
             {
                 {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = JwtBearerDefaults.AuthenticationScheme
-                        }
-                    },
+                    new OpenApiSecuritySchemeReference(JwtBearerDefaults.AuthenticationScheme, document, null),
                     scopes.Keys.ToList()
                 }
-            };
-
-            o.AddSecurityRequirement(securityRequirement);
+            });
         });
 
         return services;

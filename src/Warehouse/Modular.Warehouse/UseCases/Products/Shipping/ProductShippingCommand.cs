@@ -1,7 +1,8 @@
 ﻿using ErrorOr;
 using FluentValidation;
+using JasperFx;
+using JasperFx.Events;
 using Marten;
-using Marten.Events;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Modular.Warehouse.Errors;
@@ -68,7 +69,7 @@ internal sealed class ProductShippingCommandHandler : IRequestHandler<ProductShi
         {
             await session.SaveChangesAsync(cancellationToken);
         }
-        catch (Marten.Exceptions.ConcurrencyException ex)
+        catch (ConcurrencyException ex)
         {
             _logger.LogWarning(ex, "Product with SKU: {Sku} was modified concurrently while shipping quantity {Quantity}.", request.Sku, request.Quantity);
             return ProductErrors.ConcurrentModification(request.Sku);

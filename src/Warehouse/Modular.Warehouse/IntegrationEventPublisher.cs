@@ -1,6 +1,6 @@
-﻿using Marten;
-using Marten.Events.Daemon;
-using Marten.Events.Daemon.Internals;
+﻿using JasperFx.Events.Daemon;
+using JasperFx.Events.Projections;
+using Marten;
 using Marten.Subscriptions;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
