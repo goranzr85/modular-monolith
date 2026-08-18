@@ -8,52 +8,52 @@ internal sealed class ChangeCustomerCommandValidator : AbstractValidator<CreateC
     public ChangeCustomerCommandValidator()
     {
         RuleFor(o => o.FirstName).NotEmpty()
-            .Length(FullNameConfiguration.FirstNameLength);
+            .MaximumLength(FullNameConfiguration.FirstNameLength);
 
         RuleFor(o => o.LastName).NotEmpty()
-            .Length(FullNameConfiguration.LastNameLength);
+            .MaximumLength(FullNameConfiguration.LastNameLength);
 
         RuleFor(o => o.MiddleName)
-            .Length(FullNameConfiguration.MiddleNameLength)
+            .MaximumLength(FullNameConfiguration.MiddleNameLength)
             .When(o => !string.IsNullOrEmpty(o.MiddleName));
 
         RuleFor(o => o.Address).NotNull().ChildRules(address =>
         {
             address.RuleFor(a => a.Street).NotEmpty()
-                .Length(AddressConfiguration.StreetMaxLength);
+                .MaximumLength(AddressConfiguration.StreetMaxLength);
 
             address.RuleFor(a => a.City).NotEmpty()
-                .Length(AddressConfiguration.CityMaxLength);
+                .MaximumLength(AddressConfiguration.CityMaxLength);
 
             address.RuleFor(a => a.Zip).NotEmpty()
-                .Length(AddressConfiguration.ZipMaxLength);
+                .MaximumLength(AddressConfiguration.ZipMaxLength);
 
             address.RuleFor(a => a.State).NotEmpty()
-                .Length(AddressConfiguration.StateMaxLength);
+                .MaximumLength(AddressConfiguration.StateMaxLength);
         });
 
         RuleFor(o => o.ShippingAddress).ChildRules(address =>
         {
             address.RuleFor(a => a.Street)
-                .Length(AddressConfiguration.StreetMaxLength);
+                .MaximumLength(AddressConfiguration.StreetMaxLength);
 
             address.RuleFor(a => a.City)
-                .Length(AddressConfiguration.CityMaxLength);
+                .MaximumLength(AddressConfiguration.CityMaxLength);
 
             address.RuleFor(a => a.Zip)
-                .Length(AddressConfiguration.ZipMaxLength);
+                .MaximumLength(AddressConfiguration.ZipMaxLength);
 
             address.RuleFor(a => a.State)
-                .Length(AddressConfiguration.StateMaxLength);
+                .MaximumLength(AddressConfiguration.StateMaxLength);
         })
             .When(o => o.ShippingAddress is not null);
 
         RuleFor(o => o.Email).EmailAddress()
-            .Length(ContactConfiguration.EmailMaxLength)
+            .MaximumLength(ContactConfiguration.EmailMaxLength)
             .When(o => o.Email is not null);
 
         RuleFor(o => o.Phone)
-            .Length(ContactConfiguration.PhoneMaxLength)
-            .When(o => o.Email is not null);
+            .MaximumLength(ContactConfiguration.PhoneMaxLength)
+            .When(o => o.Phone is not null);
     }
 }

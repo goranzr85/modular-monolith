@@ -27,7 +27,7 @@ public sealed class Customer : AggregateRoot
 
     internal void ChangeAddress(Address newAddress)
     {
-        if (!Address.Equals(newAddress))
+        if (Address.Equals(newAddress))
         {
             return;
         }
@@ -37,7 +37,7 @@ public sealed class Customer : AggregateRoot
 
     internal void ChangeShippingAddress(Address newShipingAddress)
     {
-        if (!(bool)ShippingAddress?.Equals(newShipingAddress))
+        if (ShippingAddress is not null && ShippingAddress.Equals(newShipingAddress))
         {
             return;
         }
