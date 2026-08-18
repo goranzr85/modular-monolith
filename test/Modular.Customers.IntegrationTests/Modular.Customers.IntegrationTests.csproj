@@ -15,10 +15,12 @@
 		<PackageReference Include="Testcontainers.PostgreSql" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" />
 		<PackageReference Include="Microsoft.Extensions.Logging" />
+		<PackageReference Include="MassTransit.TestFramework" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\Customers\Modular.Customers\Modular.Customers.csproj" />
+		<ProjectReference Include="..\..\src\Customers\Modular.Customers.Infrastructure\Modular.Customers.Infrastructure.csproj" />
 	</ItemGroup>
 
 </Project>

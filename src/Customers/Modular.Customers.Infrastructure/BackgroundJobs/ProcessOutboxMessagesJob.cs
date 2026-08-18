@@ -1,4 +1,4 @@
-﻿using MassTransit;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Modular.Common;
@@ -7,20 +7,20 @@ using Newtonsoft.Json;
 using Polly.Registry;
 using Quartz;
 
-namespace Modular.Catalog.Infrastructure.BackgroundJobs;
+namespace Modular.Customers.Infrastructure.BackgroundJobs;
 
 [DisallowConcurrentExecution]
 public sealed class ProcessOutboxMessagesJob : IJob
 {
-    private readonly CatalogDbContext _catalogDbContext;
+    private readonly CustomerDbContext _customerDbContext;
     private readonly ILogger<ProcessOutboxMessagesJob> _logger;
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly ResiliencePipelineProvider<string> _pipelineProvider;
 
-    public ProcessOutboxMessagesJob(CatalogDbContext catalogDbContext, ILogger<ProcessOutboxMessagesJob> logger,
+    public ProcessOutboxMessagesJob(CustomerDbContext customerDbContext, ILogger<ProcessOutboxMessagesJob> logger,
         IPublishEndpoint publishEndpoint, ResiliencePipelineProvider<string> pipelineProvider)
     {
-        _catalogDbContext = catalogDbContext;
+        _customerDbContext = customerDbContext;
         _logger = logger;
         _publishEndpoint = publishEndpoint;
         _pipelineProvider = pipelineProvider;
@@ -28,25 +28,23 @@ public sealed class ProcessOutboxMessagesJob : IJob
 
     public async Task Execute(IJobExecutionContext context)
     {
-        var outboxMessages = await _catalogDbContext.OutboxMessages
+        var outboxMessages = await _customerDbContext.OutboxMessages
              .Where(m => m.ProcessedOnUtc == null)
              .Take(20)
              .ToListAsync();
 
-        foreach (OutboxMessage? outboxMessage in outboxMessages)
+        foreach (OutboxMessage outboxMessage in outboxMessages)
         {
-            var domainEvent = JsonConvert.DeserializeObject(outboxMessage.Content, new JsonSerializerSettings
+            var deserialized = JsonConvert.DeserializeObject(outboxMessage.Content, new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.All
             });
 
-            if (domainEvent is null)
+            if (deserialized is not IIntegrationEvent integrationEvent)
             {
                 _logger.LogError("Failed to deserialize integration event: {@OutboxMessage}", outboxMessage);
                 continue;
             }
-
-            var integrationEvent = DomainToIntegrationEventConverter.Convert((IDomainEvent)domainEvent);
 
             var pipeline = _pipelineProvider.GetPipeline(Constants.ResiliencePipelineName);
 
@@ -55,9 +53,9 @@ public sealed class ProcessOutboxMessagesJob : IJob
                 await _publishEndpoint.Publish(integrationEvent, integrationEvent.GetType(), CancellationToken.None);
             });
 
-            outboxMessage!.ProcessedOnUtc = DateTime.UtcNow;
+            outboxMessage.ProcessedOnUtc = DateTime.UtcNow;
         }
 
-        await _catalogDbContext.SaveChangesAsync();
+        await _customerDbContext.SaveChangesAsync();
     }
 }
