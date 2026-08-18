@@ -2,7 +2,6 @@
 
 	<ItemGroup>
 		<PackageReference Include="MassTransit.RabbitMQ" />
-		<PackageReference Include="MediatR" />
 		<PackageReference Include="Microsoft.Extensions.Resilience" />
 		<PackageReference Include="Newtonsoft.Json" />
 		<PackageReference Include="Quartz" />

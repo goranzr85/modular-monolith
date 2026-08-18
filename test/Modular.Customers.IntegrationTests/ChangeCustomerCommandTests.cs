@@ -1,7 +1,7 @@
 using ErrorOr;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Modular.Common;
 using Modular.Common.User;
 using Modular.Customers.Models;
 using Modular.Customers.UseCases.Change;
@@ -24,13 +24,13 @@ public sealed class ChangeCustomerCommandTests
 
     private static AddressDto ValidAddress() => new("123 Main St", "Springfield", "62704", "IL");
 
-    private static async Task<(Guid CustomerId, string Email)> SeedCustomerAsync(ISender sender, AddressDto? shippingAddress = null)
+    private static async Task<(Guid CustomerId, string Email)> SeedCustomerAsync(CreateCustomerCommandHandler handler, AddressDto? shippingAddress = null)
     {
         string email = $"{Unique()}@example.com";
         CreateCustomerCommand createCommand = new("John", null, "Doe", ValidAddress(), shippingAddress,
             email, null, PrimaryContactType.Email);
 
-        ErrorOr<CreateCustomerResponse> result = await sender.Send(createCommand);
+        ErrorOr<CreateCustomerResponse> result = await handler.Handle(createCommand, CancellationToken.None);
         Assert.False(result.IsError);
 
         return (result.Value.CustomerId, email);
@@ -40,15 +40,16 @@ public sealed class ChangeCustomerCommandTests
     public async Task Handle_WithNewAddress_PersistsUpdatedAddress()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler createHandler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
+        ChangeCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<ChangeCustomerCommandHandler>();
         CustomerDbContext dbContext = scope.ServiceProvider.GetRequiredService<CustomerDbContext>();
 
-        (Guid customerId, string email) = await SeedCustomerAsync(sender);
+        (Guid customerId, string email) = await SeedCustomerAsync(createHandler);
 
         AddressDto newAddress = new("789 Elm St", "Denver", "80202", "CO");
         ChangeCustomerCommand command = new(customerId, "John", null, "Doe", newAddress, null, email, null, PrimaryContactType.Email);
 
-        ErrorOr<Unit> result = await sender.Send(command);
+        ErrorOr<Unit> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.False(result.IsError);
 
@@ -63,14 +64,15 @@ public sealed class ChangeCustomerCommandTests
     public async Task Handle_WithSameAddressAsCurrent_SucceedsWithoutChangingIt()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler createHandler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
+        ChangeCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<ChangeCustomerCommandHandler>();
         CustomerDbContext dbContext = scope.ServiceProvider.GetRequiredService<CustomerDbContext>();
 
-        (Guid customerId, string email) = await SeedCustomerAsync(sender);
+        (Guid customerId, string email) = await SeedCustomerAsync(createHandler);
 
         ChangeCustomerCommand command = new(customerId, "John", null, "Doe", ValidAddress(), null, email, null, PrimaryContactType.Email);
 
-        ErrorOr<Unit> result = await sender.Send(command);
+        ErrorOr<Unit> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.False(result.IsError);
 
@@ -83,15 +85,16 @@ public sealed class ChangeCustomerCommandTests
     public async Task Handle_WithNewShippingAddress_PersistsAndRaisesShippingAddressChangedEvent()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler createHandler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
+        ChangeCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<ChangeCustomerCommandHandler>();
         CustomerDbContext dbContext = scope.ServiceProvider.GetRequiredService<CustomerDbContext>();
 
-        (Guid customerId, string email) = await SeedCustomerAsync(sender);
+        (Guid customerId, string email) = await SeedCustomerAsync(createHandler);
 
         AddressDto newShipping = new("999 Pine Rd", "Austin", "73301", "TX");
         ChangeCustomerCommand command = new(customerId, "John", null, "Doe", ValidAddress(), newShipping, email, null, PrimaryContactType.Email);
 
-        ErrorOr<Unit> result = await sender.Send(command);
+        ErrorOr<Unit> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.False(result.IsError);
 
@@ -108,14 +111,15 @@ public sealed class ChangeCustomerCommandTests
     public async Task Handle_WithSameShippingAddressAsCurrent_DoesNotRaiseShippingAddressChangedEvent()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler createHandler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
+        ChangeCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<ChangeCustomerCommandHandler>();
         CustomerDbContext dbContext = scope.ServiceProvider.GetRequiredService<CustomerDbContext>();
 
-        (Guid customerId, string email) = await SeedCustomerAsync(sender);
+        (Guid customerId, string email) = await SeedCustomerAsync(createHandler);
 
         ChangeCustomerCommand command = new(customerId, "John", null, "Doe", ValidAddress(), ValidAddress(), email, null, PrimaryContactType.Email);
 
-        ErrorOr<Unit> result = await sender.Send(command);
+        ErrorOr<Unit> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.False(result.IsError);
 
@@ -128,14 +132,15 @@ public sealed class ChangeCustomerCommandTests
     public async Task Handle_WithNewName_PersistsUpdatedNameAndRaisesEvent()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler createHandler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
+        ChangeCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<ChangeCustomerCommandHandler>();
         CustomerDbContext dbContext = scope.ServiceProvider.GetRequiredService<CustomerDbContext>();
 
-        (Guid customerId, string email) = await SeedCustomerAsync(sender);
+        (Guid customerId, string email) = await SeedCustomerAsync(createHandler);
 
         ChangeCustomerCommand command = new(customerId, "Jonathan", "Q", "Doer", ValidAddress(), null, email, null, PrimaryContactType.Email);
 
-        ErrorOr<Unit> result = await sender.Send(command);
+        ErrorOr<Unit> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.False(result.IsError);
 
@@ -154,15 +159,16 @@ public sealed class ChangeCustomerCommandTests
     public async Task Handle_WithNewEmail_PersistsUpdatedContactAndRaisesEvent()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler createHandler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
+        ChangeCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<ChangeCustomerCommandHandler>();
         CustomerDbContext dbContext = scope.ServiceProvider.GetRequiredService<CustomerDbContext>();
 
-        (Guid customerId, _) = await SeedCustomerAsync(sender);
+        (Guid customerId, _) = await SeedCustomerAsync(createHandler);
 
         string newEmail = $"{Unique()}@example.com";
         ChangeCustomerCommand command = new(customerId, "John", null, "Doe", ValidAddress(), null, newEmail, null, PrimaryContactType.Email);
 
-        ErrorOr<Unit> result = await sender.Send(command);
+        ErrorOr<Unit> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.False(result.IsError);
 
@@ -179,15 +185,16 @@ public sealed class ChangeCustomerCommandTests
     public async Task Handle_WithEmailAlreadyUsedByAnotherCustomer_ReturnsValidationErrorAndDoesNotChangeContact()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler createHandler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
+        ChangeCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<ChangeCustomerCommandHandler>();
         CustomerDbContext dbContext = scope.ServiceProvider.GetRequiredService<CustomerDbContext>();
 
-        (_, string otherEmail) = await SeedCustomerAsync(sender);
-        (Guid customerId, string originalEmail) = await SeedCustomerAsync(sender);
+        (_, string otherEmail) = await SeedCustomerAsync(createHandler);
+        (Guid customerId, string originalEmail) = await SeedCustomerAsync(createHandler);
 
         ChangeCustomerCommand command = new(customerId, "John", null, "Doe", ValidAddress(), null, otherEmail, null, PrimaryContactType.Email);
 
-        ErrorOr<Unit> result = await sender.Send(command);
+        ErrorOr<Unit> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsError);
         Assert.Equal("Customer.Contact.Validation", result.FirstError.Code);
@@ -201,12 +208,12 @@ public sealed class ChangeCustomerCommandTests
     public async Task Handle_WithUnknownCustomerId_ReturnsNotFound()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        ChangeCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<ChangeCustomerCommandHandler>();
 
         ChangeCustomerCommand command = new(Guid.NewGuid(), "John", null, "Doe", ValidAddress(), null,
             $"{Unique()}@example.com", null, PrimaryContactType.Email);
 
-        ErrorOr<Unit> result = await sender.Send(command);
+        ErrorOr<Unit> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.NotFound, result.FirstError.Type);
@@ -217,14 +224,15 @@ public sealed class ChangeCustomerCommandTests
     public async Task Handle_WithInvalidData_ReturnsValidationErrorAndDoesNotChangeCustomer()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler createHandler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
+        ChangeCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<ChangeCustomerCommandHandler>();
         CustomerDbContext dbContext = scope.ServiceProvider.GetRequiredService<CustomerDbContext>();
 
-        (Guid customerId, string email) = await SeedCustomerAsync(sender);
+        (Guid customerId, string email) = await SeedCustomerAsync(createHandler);
 
         ChangeCustomerCommand command = new(customerId, "", null, "Doe", ValidAddress(), null, email, null, PrimaryContactType.Email);
 
-        ErrorOr<Unit> result = await sender.Send(command);
+        ErrorOr<Unit> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.Validation, result.FirstError.Type);
@@ -238,13 +246,14 @@ public sealed class ChangeCustomerCommandTests
     public async Task Handle_WithNoActualChanges_Succeeds()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler createHandler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
+        ChangeCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<ChangeCustomerCommandHandler>();
 
-        (Guid customerId, string email) = await SeedCustomerAsync(sender);
+        (Guid customerId, string email) = await SeedCustomerAsync(createHandler);
 
         ChangeCustomerCommand command = new(customerId, "John", null, "Doe", ValidAddress(), null, email, null, PrimaryContactType.Email);
 
-        ErrorOr<Unit> result = await sender.Send(command);
+        ErrorOr<Unit> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.False(result.IsError);
     }

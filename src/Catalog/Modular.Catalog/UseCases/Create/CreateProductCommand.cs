@@ -1,5 +1,4 @@
 ﻿using ErrorOr;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Modular.Catalog.Errors;
@@ -7,11 +6,11 @@ using Modular.Common;
 
 namespace Modular.Catalog.UseCases.Create;
 
-internal sealed record CreateProductCommand(string Sku, string Name, string Description, decimal Price) : IRequest<ErrorOr<Unit>>
+internal sealed record CreateProductCommand(string Sku, string Name, string Description, decimal Price)
 {
 }
 
-internal sealed class CreateProductCommandHandler : IRequestHandler<CreateProductCommand, ErrorOr<Unit>>
+internal sealed class CreateProductCommandHandler
 {
     private readonly CatalogDbContext _catalogDbContext;
     private readonly ILogger<CreateProductCommandHandler> _logger;

@@ -1,6 +1,5 @@
 ﻿using Carter;
 using ErrorOr;
-using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -14,11 +13,11 @@ public sealed class ManualProductStockDecreasedEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/warehouse/decreased/{sku}", async (string sku, ProductAdjustedRequest request, ISender sender, CancellationToken cancellationToken) =>
+        app.MapPost("/api/warehouse/decreased/{sku}", async (string sku, ProductAdjustedRequest request, ManualProductStockDecreaseCommandHandler handler, CancellationToken cancellationToken) =>
         {
             ManualProductStockDecreaseCommand command = new(sku, request.Quantity, request.Reason);
 
-            ErrorOr<Unit> response = await sender.Send(command, cancellationToken);
+            ErrorOr<Unit> response = await handler.Handle(command, cancellationToken);
 
             return response.ToResult(_ => Results.NoContent());
         })

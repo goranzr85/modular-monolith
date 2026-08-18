@@ -1,7 +1,7 @@
 using ErrorOr;
-using MediatR;
 using Marten;
 using Microsoft.Extensions.DependencyInjection;
+using Modular.Common;
 using Modular.Warehouse.UseCases.Products.Models;
 using Modular.Warehouse.UseCases.Products.Receiving;
 using Xunit;
@@ -23,12 +23,12 @@ public sealed class ProductReceivingCommandTests
     {
         await using WarehouseTestApp app = await _fixture.CreateAppAsync();
         IDocumentStore store = app.Services.GetRequiredService<IDocumentStore>();
-        ISender sender = app.Services.GetRequiredService<ISender>();
+        ProductReceivingCommandHandler handler = app.Services.GetRequiredService<ProductReceivingCommandHandler>();
 
         string sku = WarehouseTestHelpers.NewSku();
         await WarehouseTestHelpers.SeedProductAsync(store, sku, initialQuantity: 5);
 
-        ErrorOr<Unit> result = await sender.Send(new ProductReceivingCommand(sku, 10));
+        ErrorOr<Unit> result = await handler.Handle(new ProductReceivingCommand(sku, 10), CancellationToken.None);
 
         Assert.False(result.IsError);
 
@@ -42,9 +42,9 @@ public sealed class ProductReceivingCommandTests
     public async Task Handle_WithUnknownSku_ReturnsProductNotFound()
     {
         await using WarehouseTestApp app = await _fixture.CreateAppAsync();
-        ISender sender = app.Services.GetRequiredService<ISender>();
+        ProductReceivingCommandHandler handler = app.Services.GetRequiredService<ProductReceivingCommandHandler>();
 
-        ErrorOr<Unit> result = await sender.Send(new ProductReceivingCommand(WarehouseTestHelpers.NewSku(), 10));
+        ErrorOr<Unit> result = await handler.Handle(new ProductReceivingCommand(WarehouseTestHelpers.NewSku(), 10), CancellationToken.None);
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.NotFound, result.FirstError.Type);
@@ -56,13 +56,13 @@ public sealed class ProductReceivingCommandTests
     {
         await using WarehouseTestApp app = await _fixture.CreateAppAsync();
         IDocumentStore store = app.Services.GetRequiredService<IDocumentStore>();
-        ISender sender = app.Services.GetRequiredService<ISender>();
+        ProductReceivingCommandHandler handler = app.Services.GetRequiredService<ProductReceivingCommandHandler>();
 
         string sku = WarehouseTestHelpers.NewSku();
         await WarehouseTestHelpers.SeedProductAsync(store, sku);
         await WarehouseTestHelpers.DelistProductAsync(store, sku);
 
-        ErrorOr<Unit> result = await sender.Send(new ProductReceivingCommand(sku, 10));
+        ErrorOr<Unit> result = await handler.Handle(new ProductReceivingCommand(sku, 10), CancellationToken.None);
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.NotFound, result.FirstError.Type);
@@ -78,9 +78,9 @@ public sealed class ProductReceivingCommandTests
         // so ProductReceivingCommandValidator (internal) was never actually registered and validation
         // silently never ran.
         await using WarehouseTestApp app = await _fixture.CreateAppAsync();
-        ISender sender = app.Services.GetRequiredService<ISender>();
+        ProductReceivingCommandHandler handler = app.Services.GetRequiredService<ProductReceivingCommandHandler>();
 
-        ErrorOr<Unit> result = await sender.Send(new ProductReceivingCommand(sku, quantity));
+        ErrorOr<Unit> result = await handler.Handle(new ProductReceivingCommand(sku, quantity), CancellationToken.None);
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.Validation, result.FirstError.Type);

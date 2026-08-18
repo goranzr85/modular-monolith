@@ -1,5 +1,4 @@
 using ErrorOr;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Modular.Common;
@@ -38,13 +37,13 @@ public sealed class CreateCustomerCommandTests
     public async Task Handle_WithEmailOnlyAndNoShippingAddress_PersistsCustomerWithShippingAddressDefaultedToAddress()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
         CustomerDbContext dbContext = scope.ServiceProvider.GetRequiredService<CustomerDbContext>();
 
         string email = $"{Unique()}@example.com";
         CreateCustomerCommand command = ValidCommand(email: email, primaryContactType: PrimaryContactType.Email);
 
-        ErrorOr<CreateCustomerResponse> result = await sender.Send(command);
+        ErrorOr<CreateCustomerResponse> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.False(result.IsError);
 
@@ -66,13 +65,13 @@ public sealed class CreateCustomerCommandTests
     public async Task Handle_WithDistinctShippingAddress_PersistsShippingAddressSeparately()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
         CustomerDbContext dbContext = scope.ServiceProvider.GetRequiredService<CustomerDbContext>();
 
         AddressDto shipping = new("456 Oak Ave", "Chicago", "60601", "IL");
         CreateCustomerCommand command = ValidCommand(shippingAddress: shipping);
 
-        ErrorOr<CreateCustomerResponse> result = await sender.Send(command);
+        ErrorOr<CreateCustomerResponse> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.False(result.IsError);
 
@@ -88,13 +87,13 @@ public sealed class CreateCustomerCommandTests
     public async Task Handle_WithPhoneOnlyAsPrimaryContact_Succeeds()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
 
         string phone = $"+1555{Unique()[..7]}";
         CreateCustomerCommand command = new("Jane", null, "Roe", ValidAddress(), null,
             null, phone, PrimaryContactType.Phone);
 
-        ErrorOr<CreateCustomerResponse> result = await sender.Send(command);
+        ErrorOr<CreateCustomerResponse> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.False(result.IsError);
     }
@@ -105,12 +104,12 @@ public sealed class CreateCustomerCommandTests
     public async Task Handle_WithMissingFirstName_ReturnsValidationError(string? firstName)
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
 
         CreateCustomerCommand command = new(firstName!, null, "Doe", ValidAddress(), null,
             $"{Unique()}@example.com", null, PrimaryContactType.Email);
 
-        ErrorOr<CreateCustomerResponse> result = await sender.Send(command);
+        ErrorOr<CreateCustomerResponse> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.Validation, result.FirstError.Type);
@@ -120,12 +119,12 @@ public sealed class CreateCustomerCommandTests
     public async Task Handle_WithFirstNameExceedingMaxLength_ReturnsValidationError()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
 
         CreateCustomerCommand command = new(new string('a', 51), null, "Doe", ValidAddress(), null,
             $"{Unique()}@example.com", null, PrimaryContactType.Email);
 
-        ErrorOr<CreateCustomerResponse> result = await sender.Send(command);
+        ErrorOr<CreateCustomerResponse> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.Validation, result.FirstError.Type);
@@ -135,11 +134,11 @@ public sealed class CreateCustomerCommandTests
     public async Task Handle_WithoutMiddleName_Succeeds()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
 
         CreateCustomerCommand command = ValidCommand(middleName: null);
 
-        ErrorOr<CreateCustomerResponse> result = await sender.Send(command);
+        ErrorOr<CreateCustomerResponse> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.False(result.IsError);
     }
@@ -148,11 +147,11 @@ public sealed class CreateCustomerCommandTests
     public async Task Handle_WithMiddleNameExceedingMaxLength_ReturnsValidationError()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
 
         CreateCustomerCommand command = ValidCommand(middleName: new string('m', 51));
 
-        ErrorOr<CreateCustomerResponse> result = await sender.Send(command);
+        ErrorOr<CreateCustomerResponse> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.Validation, result.FirstError.Type);
@@ -162,12 +161,12 @@ public sealed class CreateCustomerCommandTests
     public async Task Handle_WithEmptyAddressStreet_ReturnsValidationError()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
 
         AddressDto invalidAddress = new("", "Springfield", "62704", "IL");
         CreateCustomerCommand command = ValidCommand(address: invalidAddress);
 
-        ErrorOr<CreateCustomerResponse> result = await sender.Send(command);
+        ErrorOr<CreateCustomerResponse> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.Validation, result.FirstError.Type);
@@ -177,12 +176,12 @@ public sealed class CreateCustomerCommandTests
     public async Task Handle_WithNeitherEmailNorPhone_ReturnsContactValidationError()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
 
         CreateCustomerCommand command = new("John", null, "Doe", ValidAddress(), null,
             null, null, PrimaryContactType.Email);
 
-        ErrorOr<CreateCustomerResponse> result = await sender.Send(command);
+        ErrorOr<CreateCustomerResponse> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.Validation, result.FirstError.Type);
@@ -193,13 +192,13 @@ public sealed class CreateCustomerCommandTests
     public async Task Handle_WithPrimaryContactTypeEmailButNoEmail_ReturnsContactValidationError()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
 
         string phone = $"+1555{Unique()[..7]}";
         CreateCustomerCommand command = new("John", null, "Doe", ValidAddress(), null,
             null, phone, PrimaryContactType.Email);
 
-        ErrorOr<CreateCustomerResponse> result = await sender.Send(command);
+        ErrorOr<CreateCustomerResponse> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsError);
         Assert.Equal("Customer.Contact.Validation", result.FirstError.Code);
@@ -209,11 +208,11 @@ public sealed class CreateCustomerCommandTests
     public async Task Handle_WithPrimaryContactTypePhoneButNoPhone_ReturnsContactValidationError()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
 
         CreateCustomerCommand command = ValidCommand(primaryContactType: PrimaryContactType.Phone);
 
-        ErrorOr<CreateCustomerResponse> result = await sender.Send(command);
+        ErrorOr<CreateCustomerResponse> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsError);
         Assert.Equal("Customer.Contact.Validation", result.FirstError.Code);
@@ -223,14 +222,14 @@ public sealed class CreateCustomerCommandTests
     public async Task Handle_WithDuplicateEmail_ReturnsValidationErrorAndDoesNotCreateSecondCustomer()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
         CustomerDbContext dbContext = scope.ServiceProvider.GetRequiredService<CustomerDbContext>();
 
         string email = $"{Unique()}@example.com";
-        ErrorOr<CreateCustomerResponse> first = await sender.Send(ValidCommand(email: email));
+        ErrorOr<CreateCustomerResponse> first = await handler.Handle(ValidCommand(email: email), CancellationToken.None);
         Assert.False(first.IsError);
 
-        ErrorOr<CreateCustomerResponse> second = await sender.Send(ValidCommand(email: email));
+        ErrorOr<CreateCustomerResponse> second = await handler.Handle(ValidCommand(email: email), CancellationToken.None);
 
         Assert.True(second.IsError);
         Assert.Equal(ErrorType.Validation, second.FirstError.Type);
@@ -244,15 +243,15 @@ public sealed class CreateCustomerCommandTests
     public async Task Handle_WithDuplicatePhone_ReturnsValidationError()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
 
         string phone = $"+1555{Unique()[..7]}";
         CreateCustomerCommand first = new("John", null, "Doe", ValidAddress(), null, null, phone, PrimaryContactType.Phone);
-        ErrorOr<CreateCustomerResponse> firstResult = await sender.Send(first);
+        ErrorOr<CreateCustomerResponse> firstResult = await handler.Handle(first, CancellationToken.None);
         Assert.False(firstResult.IsError);
 
         CreateCustomerCommand second = new("Jane", null, "Roe", ValidAddress(), null, null, phone, PrimaryContactType.Phone);
-        ErrorOr<CreateCustomerResponse> secondResult = await sender.Send(second);
+        ErrorOr<CreateCustomerResponse> secondResult = await handler.Handle(second, CancellationToken.None);
 
         Assert.True(secondResult.IsError);
         Assert.Equal("Customer.Contact.Validation", secondResult.FirstError.Code);
@@ -262,11 +261,11 @@ public sealed class CreateCustomerCommandTests
     public async Task Handle_WithInvalidEmailFormat_ReturnsValidationError()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
 
         CreateCustomerCommand command = ValidCommand(email: "not-an-email");
 
-        ErrorOr<CreateCustomerResponse> result = await sender.Send(command);
+        ErrorOr<CreateCustomerResponse> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.Validation, result.FirstError.Type);
@@ -276,12 +275,12 @@ public sealed class CreateCustomerCommandTests
     public async Task Handle_WithEmailExceedingMaxLength_ReturnsValidationError()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
 
         string longEmail = new string('a', 75) + "@example.com";
         CreateCustomerCommand command = ValidCommand(email: longEmail);
 
-        ErrorOr<CreateCustomerResponse> result = await sender.Send(command);
+        ErrorOr<CreateCustomerResponse> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.Validation, result.FirstError.Type);
@@ -291,13 +290,13 @@ public sealed class CreateCustomerCommandTests
     public async Task Handle_WithPhoneExceedingMaxLengthAndNoEmail_ReturnsValidationError()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler handler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
 
         string longPhone = new string('5', 51);
         CreateCustomerCommand command = new("John", null, "Doe", ValidAddress(), null,
             null, longPhone, PrimaryContactType.Phone);
 
-        ErrorOr<CreateCustomerResponse> result = await sender.Send(command);
+        ErrorOr<CreateCustomerResponse> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.Validation, result.FirstError.Type);

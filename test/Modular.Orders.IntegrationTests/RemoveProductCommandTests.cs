@@ -1,5 +1,4 @@
 using ErrorOr;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Modular.Common;
@@ -30,7 +29,7 @@ public sealed class RemoveProductCommandTests
         ErrorOr<Guid> result = await OrderTestHelpers.RunAsync(_fixture, async sp =>
         {
             List<OrderItem> items = [new OrderItem { ProductId = productId, Quantity = 2, Price = Price.Create(9.99m) }];
-            return await sp.GetRequiredService<ISender>().Send(new CreateOrderCommand(orderId, DateTimeOffset.UtcNow, Guid.NewGuid(), items));
+            return await sp.GetRequiredService<CreateOrderCommandHandler>().Handle(new CreateOrderCommand(orderId, DateTimeOffset.UtcNow, Guid.NewGuid(), items), CancellationToken.None);
         });
         Assert.False(result.IsError);
 
@@ -43,7 +42,7 @@ public sealed class RemoveProductCommandTests
         (Guid orderId, int productId) = await SeedOrderWithItemAsync();
 
         ErrorOr<Unit> result = await OrderTestHelpers.RunAsync(_fixture, async sp =>
-            await sp.GetRequiredService<ISender>().Send(new RemoveProductCommand(orderId, productId)));
+            await sp.GetRequiredService<RemoveProductCommandHandler>().Handle(new RemoveProductCommand(orderId, productId), CancellationToken.None));
 
         Assert.False(result.IsError);
 
@@ -58,7 +57,7 @@ public sealed class RemoveProductCommandTests
     public async Task Handle_WithUnknownOrder_ReturnsOrderNotFound()
     {
         ErrorOr<Unit> result = await OrderTestHelpers.RunAsync(_fixture, async sp =>
-            await sp.GetRequiredService<ISender>().Send(new RemoveProductCommand(Guid.NewGuid(), 1)));
+            await sp.GetRequiredService<RemoveProductCommandHandler>().Handle(new RemoveProductCommand(Guid.NewGuid(), 1), CancellationToken.None));
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.NotFound, result.FirstError.Type);
@@ -78,9 +77,9 @@ public sealed class RemoveProductCommandTests
 
         await OrderTestHelpers.RunAsync(_fixture, async sp =>
         {
-            ISender sender = sp.GetRequiredService<ISender>();
+            RemoveProductCommandHandler handler = sp.GetRequiredService<RemoveProductCommandHandler>();
             await Assert.ThrowsAsync<InvalidOperationException>(
-                () => sender.Send(new RemoveProductCommand(orderId, otherProductId)));
+                () => handler.Handle(new RemoveProductCommand(orderId, otherProductId), CancellationToken.None));
         });
     }
 }

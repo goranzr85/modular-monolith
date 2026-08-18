@@ -1,6 +1,5 @@
 ﻿using ErrorOr;
 using FluentValidation;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Modular.Catalog.Errors;
 using Modular.Common;
@@ -18,21 +17,30 @@ internal sealed class ChangeProductCommandValidator : AbstractValidator<ChangePr
     }
 }
 
-internal sealed record ChangeProductCommand(string Sku, string Name, string Description, decimal Price) : IRequest<ErrorOr<Unit>>
+internal sealed record ChangeProductCommand(string Sku, string Name, string Description, decimal Price)
 {
 }
 
-internal sealed class ChangeProductCommandHandler : IRequestHandler<ChangeProductCommand, ErrorOr<Unit>>
+internal sealed class ChangeProductCommandHandler
 {
     private readonly CatalogDbContext _catalogDbContext;
+    private readonly IValidator<ChangeProductCommand> _validator;
 
-    public ChangeProductCommandHandler(CatalogDbContext catalogDbContext)
+    public ChangeProductCommandHandler(CatalogDbContext catalogDbContext, IValidator<ChangeProductCommand> validator)
     {
         _catalogDbContext = catalogDbContext;
+        _validator = validator;
     }
 
     public async Task<ErrorOr<Unit>> Handle(ChangeProductCommand request, CancellationToken cancellationToken)
     {
+        List<Error> validationErrors = await _validator.GetValidationErrorsAsync(request, cancellationToken);
+
+        if (validationErrors.Count > 0)
+        {
+            return validationErrors;
+        }
+
         Product? product = await _catalogDbContext.Products
             .FirstOrDefaultAsync(p => p.Sku == request.Sku, cancellationToken);
 

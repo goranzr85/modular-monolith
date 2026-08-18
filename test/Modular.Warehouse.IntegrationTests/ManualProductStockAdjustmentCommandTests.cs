@@ -1,7 +1,7 @@
 using ErrorOr;
-using MediatR;
 using Marten;
 using Microsoft.Extensions.DependencyInjection;
+using Modular.Common;
 using Modular.Warehouse.UseCases.Products.Adjusted.Decreased;
 using Modular.Warehouse.UseCases.Products.Adjusted.Increased;
 using Modular.Warehouse.UseCases.Products.Models;
@@ -24,12 +24,12 @@ public sealed class ManualProductStockAdjustmentCommandTests
     {
         await using WarehouseTestApp app = await _fixture.CreateAppAsync();
         IDocumentStore store = app.Services.GetRequiredService<IDocumentStore>();
-        ISender sender = app.Services.GetRequiredService<ISender>();
+        ManualProductStockIncreaseCommandHandler handler = app.Services.GetRequiredService<ManualProductStockIncreaseCommandHandler>();
 
         string sku = WarehouseTestHelpers.NewSku();
         await WarehouseTestHelpers.SeedProductAsync(store, sku, initialQuantity: 5);
 
-        ErrorOr<Unit> result = await sender.Send(new ManualProductStockIncreaseCommand(sku, 3, "Stock count correction"));
+        ErrorOr<Unit> result = await handler.Handle(new ManualProductStockIncreaseCommand(sku, 3, "Stock count correction"), CancellationToken.None);
 
         Assert.False(result.IsError);
 
@@ -43,9 +43,9 @@ public sealed class ManualProductStockAdjustmentCommandTests
     public async Task Increase_WithUnknownSku_ReturnsProductNotFound()
     {
         await using WarehouseTestApp app = await _fixture.CreateAppAsync();
-        ISender sender = app.Services.GetRequiredService<ISender>();
+        ManualProductStockIncreaseCommandHandler handler = app.Services.GetRequiredService<ManualProductStockIncreaseCommandHandler>();
 
-        ErrorOr<Unit> result = await sender.Send(new ManualProductStockIncreaseCommand(WarehouseTestHelpers.NewSku(), 3, "Reason"));
+        ErrorOr<Unit> result = await handler.Handle(new ManualProductStockIncreaseCommand(WarehouseTestHelpers.NewSku(), 3, "Reason"), CancellationToken.None);
 
         Assert.True(result.IsError);
         Assert.Equal("Product.NotFound", result.FirstError.Code);
@@ -58,9 +58,9 @@ public sealed class ManualProductStockAdjustmentCommandTests
     public async Task Increase_WithInvalidInput_ReturnsValidationError(string sku, uint quantity, string reason)
     {
         await using WarehouseTestApp app = await _fixture.CreateAppAsync();
-        ISender sender = app.Services.GetRequiredService<ISender>();
+        ManualProductStockIncreaseCommandHandler handler = app.Services.GetRequiredService<ManualProductStockIncreaseCommandHandler>();
 
-        ErrorOr<Unit> result = await sender.Send(new ManualProductStockIncreaseCommand(sku, quantity, reason));
+        ErrorOr<Unit> result = await handler.Handle(new ManualProductStockIncreaseCommand(sku, quantity, reason), CancellationToken.None);
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.Validation, result.FirstError.Type);
@@ -71,12 +71,12 @@ public sealed class ManualProductStockAdjustmentCommandTests
     {
         await using WarehouseTestApp app = await _fixture.CreateAppAsync();
         IDocumentStore store = app.Services.GetRequiredService<IDocumentStore>();
-        ISender sender = app.Services.GetRequiredService<ISender>();
+        ManualProductStockDecreaseCommandHandler handler = app.Services.GetRequiredService<ManualProductStockDecreaseCommandHandler>();
 
         string sku = WarehouseTestHelpers.NewSku();
         await WarehouseTestHelpers.SeedProductAsync(store, sku, initialQuantity: 10);
 
-        ErrorOr<Unit> result = await sender.Send(new ManualProductStockDecreaseCommand(sku, 4, "Damaged goods"));
+        ErrorOr<Unit> result = await handler.Handle(new ManualProductStockDecreaseCommand(sku, 4, "Damaged goods"), CancellationToken.None);
 
         Assert.False(result.IsError);
 
@@ -91,12 +91,12 @@ public sealed class ManualProductStockAdjustmentCommandTests
     {
         await using WarehouseTestApp app = await _fixture.CreateAppAsync();
         IDocumentStore store = app.Services.GetRequiredService<IDocumentStore>();
-        ISender sender = app.Services.GetRequiredService<ISender>();
+        ManualProductStockDecreaseCommandHandler handler = app.Services.GetRequiredService<ManualProductStockDecreaseCommandHandler>();
 
         string sku = WarehouseTestHelpers.NewSku();
         await WarehouseTestHelpers.SeedProductAsync(store, sku, initialQuantity: 2);
 
-        ErrorOr<Unit> result = await sender.Send(new ManualProductStockDecreaseCommand(sku, 5, "Damaged goods"));
+        ErrorOr<Unit> result = await handler.Handle(new ManualProductStockDecreaseCommand(sku, 5, "Damaged goods"), CancellationToken.None);
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.Conflict, result.FirstError.Type);
@@ -107,9 +107,9 @@ public sealed class ManualProductStockAdjustmentCommandTests
     public async Task Decrease_WithUnknownSku_ReturnsProductNotFound()
     {
         await using WarehouseTestApp app = await _fixture.CreateAppAsync();
-        ISender sender = app.Services.GetRequiredService<ISender>();
+        ManualProductStockDecreaseCommandHandler handler = app.Services.GetRequiredService<ManualProductStockDecreaseCommandHandler>();
 
-        ErrorOr<Unit> result = await sender.Send(new ManualProductStockDecreaseCommand(WarehouseTestHelpers.NewSku(), 1, "Reason"));
+        ErrorOr<Unit> result = await handler.Handle(new ManualProductStockDecreaseCommand(WarehouseTestHelpers.NewSku(), 1, "Reason"), CancellationToken.None);
 
         Assert.True(result.IsError);
         Assert.Equal("Product.NotFound", result.FirstError.Code);
@@ -122,9 +122,9 @@ public sealed class ManualProductStockAdjustmentCommandTests
     public async Task Decrease_WithInvalidInput_ReturnsValidationError(string sku, uint quantity, string reason)
     {
         await using WarehouseTestApp app = await _fixture.CreateAppAsync();
-        ISender sender = app.Services.GetRequiredService<ISender>();
+        ManualProductStockDecreaseCommandHandler handler = app.Services.GetRequiredService<ManualProductStockDecreaseCommandHandler>();
 
-        ErrorOr<Unit> result = await sender.Send(new ManualProductStockDecreaseCommand(sku, quantity, reason));
+        ErrorOr<Unit> result = await handler.Handle(new ManualProductStockDecreaseCommand(sku, quantity, reason), CancellationToken.None);
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.Validation, result.FirstError.Type);

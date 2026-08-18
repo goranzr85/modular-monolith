@@ -1,9 +1,7 @@
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Modular.Common.Behaviors;
 using Testcontainers.PostgreSql;
 using Xunit;
 
@@ -35,7 +33,6 @@ public sealed class OrderDatabaseFixture : IAsyncLifetime
         ServiceCollection services = new();
         services.AddLogging();
         services.RegisterOrderModule(configuration);
-        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
         _serviceProvider = services.BuildServiceProvider();
 

@@ -1,5 +1,5 @@
 ﻿using ErrorOr;
-using MediatR;
+using Modular.Common;
 using Modular.Common.Events;
 
 namespace Modular.Notifications.Infrastructure.NotificationSenders;

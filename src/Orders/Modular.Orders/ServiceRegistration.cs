@@ -2,6 +2,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Modular.Orders.UseCases.Orders.Cancel;
+using Modular.Orders.UseCases.Orders.Change.AddProducts;
+using Modular.Orders.UseCases.Orders.Change.ChangeProductQuantity.Decrease;
+using Modular.Orders.UseCases.Orders.Change.ChangeProductQuantity.Increase;
+using Modular.Orders.UseCases.Orders.Change.RemoveProducts;
+using Modular.Orders.UseCases.Orders.Create;
+using Modular.Orders.UseCases.Orders.Submitted;
 using Modular.Orders.UseCases.Products.Created;
 using Modular.Orders.UseCases.Products.Received;
 
@@ -23,7 +30,13 @@ public static class ServiceRegistration
             });
         });
 
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(ServiceRegistration).Assembly));
+        services.AddScoped<CreateOrderCommandHandler>();
+        services.AddScoped<OrderSubmitCommandHandler>();
+        services.AddScoped<CancelOrderCommandHandler>();
+        services.AddScoped<AddProductCommandHandler>();
+        services.AddScoped<RemoveProductCommandHandler>();
+        services.AddScoped<IncreaseProductQuantityCommandHandler>();
+        services.AddScoped<DecreaseProductQuantityCommandHandler>();
 
         services.AddScoped<ProductCreatedEventHandler>();
 

@@ -37,9 +37,6 @@
     <PackageVersion Include="ErrorOr" Version="2.1.1" />
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
-    <!-- Pinned to the last MIT-licensed release: MediatR 13+ moved to a commercial license
-         (Central Point Software). Not bumping across that boundary without an explicit decision. -->
-    <PackageVersion Include="MediatR" Version="12.5.0" />
     <PackageVersion Include="Ulid" Version="1.4.1" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageVersion Include="Quartz" Version="3.19.1" />

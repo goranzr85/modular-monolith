@@ -1,8 +1,8 @@
 ﻿using ErrorOr;
 using FluentValidation;
 using Marten;
-using MediatR;
 using Microsoft.Extensions.Logging;
+using Modular.Common;
 using Modular.Warehouse.SourceModels;
 using Modular.Warehouse.UseCases.Products.Models;
 
@@ -17,25 +17,35 @@ internal sealed class ProductReceivingCommandValidator : AbstractValidator<Produ
     }
 }
 
-internal sealed record ProductReceivingCommand(string Sku, uint Quantity) : IRequest<ErrorOr<Unit>>;
+internal sealed record ProductReceivingCommand(string Sku, uint Quantity);
 
-internal sealed class ProductReceivingCommandHandler : IRequestHandler<ProductReceivingCommand, ErrorOr<Unit>>
+internal sealed class ProductReceivingCommandHandler
 {
     private readonly IDocumentStore _documentStore;
     private readonly IProductStreamStore _productStreamStore;
     private readonly TimeProvider _dateTimeProvider;
     private readonly ILogger<ProductReceivingCommandHandler> _logger;
+    private readonly IValidator<ProductReceivingCommand> _validator;
 
-    public ProductReceivingCommandHandler(IDocumentStore documentStore, IProductStreamStore productStreamStore, ILogger<ProductReceivingCommandHandler> logger, TimeProvider dateTimeProvider)
+    public ProductReceivingCommandHandler(IDocumentStore documentStore, IProductStreamStore productStreamStore, ILogger<ProductReceivingCommandHandler> logger,
+        TimeProvider dateTimeProvider, IValidator<ProductReceivingCommand> validator)
     {
         _documentStore = documentStore;
         _productStreamStore = productStreamStore;
         _logger = logger;
         _dateTimeProvider = dateTimeProvider;
+        _validator = validator;
     }
 
     public async Task<ErrorOr<Unit>> Handle(ProductReceivingCommand request, CancellationToken cancellationToken)
     {
+        List<Error> validationErrors = await _validator.GetValidationErrorsAsync(request, cancellationToken);
+
+        if (validationErrors.Count > 0)
+        {
+            return validationErrors;
+        }
+
         _logger.LogInformation("Receiving product {Sku} with quantity {Quantity}.", request.Sku, request.Quantity);
 
         await using var session = _documentStore.LightweightSession();

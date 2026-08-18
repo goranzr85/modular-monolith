@@ -1,6 +1,5 @@
 using ErrorOr;
 using MassTransit.Testing;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Modular.Common;
@@ -32,13 +31,13 @@ public sealed class ProcessOutboxMessagesJobTests
     public async Task Execute_WithPendingCustomerCreatedOutboxMessage_PublishesEventAndMarksMessageProcessed()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler createHandler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
         CustomerDbContext dbContext = scope.ServiceProvider.GetRequiredService<CustomerDbContext>();
         ITestHarness harness = scope.ServiceProvider.GetRequiredService<ITestHarness>();
 
         string email = $"{Unique()}@example.com";
         CreateCustomerCommand createCommand = new("John", null, "Doe", ValidAddress(), null, email, null, PrimaryContactType.Email);
-        ErrorOr<CreateCustomerResponse> createResult = await sender.Send(createCommand);
+        ErrorOr<CreateCustomerResponse> createResult = await createHandler.Handle(createCommand, CancellationToken.None);
         Assert.False(createResult.IsError);
         Guid customerId = createResult.Value.CustomerId;
 
@@ -58,13 +57,14 @@ public sealed class ProcessOutboxMessagesJobTests
     public async Task Execute_WithPendingShippingAddressChangedOutboxMessage_PublishesEvent()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateCustomerCommandHandler createHandler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
+        ChangeCustomerCommandHandler changeHandler = scope.ServiceProvider.GetRequiredService<ChangeCustomerCommandHandler>();
         CustomerDbContext dbContext = scope.ServiceProvider.GetRequiredService<CustomerDbContext>();
         ITestHarness harness = scope.ServiceProvider.GetRequiredService<ITestHarness>();
 
         string email = $"{Unique()}@example.com";
         CreateCustomerCommand createCommand = new("Jane", null, "Roe", ValidAddress(), null, email, null, PrimaryContactType.Email);
-        ErrorOr<CreateCustomerResponse> createResult = await sender.Send(createCommand);
+        ErrorOr<CreateCustomerResponse> createResult = await createHandler.Handle(createCommand, CancellationToken.None);
         Assert.False(createResult.IsError);
         Guid customerId = createResult.Value.CustomerId;
 
@@ -73,7 +73,7 @@ public sealed class ProcessOutboxMessagesJobTests
 
         AddressDto newShipping = new("999 Pine Rd", "Austin", "73301", "TX");
         ChangeCustomerCommand changeCommand = new(customerId, "Jane", null, "Roe", ValidAddress(), newShipping, email, null, PrimaryContactType.Email);
-        ErrorOr<Unit> changeResult = await sender.Send(changeCommand);
+        ErrorOr<Unit> changeResult = await changeHandler.Handle(changeCommand, CancellationToken.None);
         Assert.False(changeResult.IsError);
 
         await job.Execute(null!);

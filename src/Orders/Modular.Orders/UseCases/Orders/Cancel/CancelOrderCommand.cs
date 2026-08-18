@@ -1,15 +1,15 @@
 ﻿using ErrorOr;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Modular.Common;
 using Modular.Orders.Errors;
 using Modular.Orders.UseCases.Orders.Models;
 
 namespace Modular.Orders.UseCases.Orders.Cancel;
 
-internal sealed record CancelOrderCommand(Guid OrderId) : IRequest<ErrorOr<Unit>>;
+internal sealed record CancelOrderCommand(Guid OrderId);
 
-internal sealed class CancelOrderCommandHandler : IRequestHandler<CancelOrderCommand, ErrorOr<Unit>>
+internal sealed class CancelOrderCommandHandler
 {
     private readonly OrderDbContext _orderDbContext;
     private readonly ILogger<CancelOrderCommandHandler> _logger;

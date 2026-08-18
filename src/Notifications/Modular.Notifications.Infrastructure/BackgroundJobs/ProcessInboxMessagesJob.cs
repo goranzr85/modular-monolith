@@ -50,7 +50,7 @@ public sealed class ProcessInboxMessagesJob : IJob
                 continue;
             }
 
-            ErrorOr.ErrorOr<MediatR.Unit> sendResult = await _notificationSender.SendAsync(orderShippedEvent);
+            ErrorOr.ErrorOr<Modular.Common.Unit> sendResult = await _notificationSender.SendAsync(orderShippedEvent);
 
             if (sendResult.IsError)
             {

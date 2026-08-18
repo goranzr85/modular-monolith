@@ -1,6 +1,6 @@
 ﻿using ErrorOr;
 using JasperFx;
-using MediatR;
+using Modular.Common;
 using Modular.Warehouse.Errors;
 using Modular.Warehouse.SourceModels;
 

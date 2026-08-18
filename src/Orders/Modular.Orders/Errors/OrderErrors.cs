@@ -1,5 +1,5 @@
 ﻿using ErrorOr;
-using MediatR;
+using Modular.Common;
 using Modular.Orders.UseCases.Orders.Models;
 
 namespace Modular.Orders.Errors;

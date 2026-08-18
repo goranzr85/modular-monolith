@@ -1,32 +1,42 @@
 ﻿using ErrorOr;
-using MediatR;
+using FluentValidation;
 using Microsoft.Extensions.Logging;
+using Modular.Common;
 using Modular.Common.User;
 using Modular.Customers.Models;
 
 namespace Modular.Customers.UseCases.Create;
 
 internal sealed record CreateCustomerCommand(string FirstName, string? MiddleName, string LastName,
-AddressDto Address, AddressDto? ShippingAddress, string? Email, string? Phone, PrimaryContactType PrimaryContactType) : IRequest<ErrorOr<CreateCustomerResponse>>
+AddressDto Address, AddressDto? ShippingAddress, string? Email, string? Phone, PrimaryContactType PrimaryContactType)
 {
 }
 
-internal sealed class CreateCustomerCommandHandler : IRequestHandler<CreateCustomerCommand, ErrorOr<CreateCustomerResponse>>
+internal sealed class CreateCustomerCommandHandler
 {
     private readonly CustomerDbContext _customerDbContext;
     private readonly ContactFactory _contactFactory;
     private readonly ILogger<CreateCustomerCommandHandler> _logger;
+    private readonly IValidator<CreateCustomerCommand> _validator;
 
     public CreateCustomerCommandHandler(CustomerDbContext customerDbContext, ILogger<CreateCustomerCommandHandler> logger,
-        ContactFactory contactFactory)
+        ContactFactory contactFactory, IValidator<CreateCustomerCommand> validator)
     {
         _customerDbContext = customerDbContext;
         _logger = logger;
         _contactFactory = contactFactory;
+        _validator = validator;
     }
 
     public async Task<ErrorOr<CreateCustomerResponse>> Handle(CreateCustomerCommand request, CancellationToken cancellationToken)
     {
+        List<Error> validationErrors = await _validator.GetValidationErrorsAsync(request, cancellationToken);
+
+        if (validationErrors.Count > 0)
+        {
+            return validationErrors;
+        }
+
         ErrorOr<FullName> fullNameResponse = FullName.Create(request.FirstName, request.MiddleName, request.LastName);
 
         if (fullNameResponse.IsError)

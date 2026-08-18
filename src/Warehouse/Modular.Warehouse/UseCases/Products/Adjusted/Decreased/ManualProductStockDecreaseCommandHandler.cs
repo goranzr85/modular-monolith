@@ -3,8 +3,8 @@ using FluentValidation;
 using JasperFx;
 using JasperFx.Events;
 using Marten;
-using MediatR;
 using Microsoft.Extensions.Logging;
+using Modular.Common;
 using Modular.Warehouse.Errors;
 using Modular.Warehouse.SourceModels;
 using Modular.Warehouse.UseCases.Products.Models;
@@ -21,25 +21,35 @@ internal sealed class ManualProductStockDecreaseCommandValidator : AbstractValid
     }
 }
 
-internal sealed record ManualProductStockDecreaseCommand(string Sku, uint Quantity, string Reason) : IRequest<ErrorOr<Unit>>;
+internal sealed record ManualProductStockDecreaseCommand(string Sku, uint Quantity, string Reason);
 
-internal sealed class ManualProductStockDecreaseCommandHandler : IRequestHandler<ManualProductStockDecreaseCommand, ErrorOr<Unit>>
+internal sealed class ManualProductStockDecreaseCommandHandler
 {
     private readonly IDocumentStore _documentStore;
     private readonly IProductStreamStore _productStreamStore;
     private readonly TimeProvider _dateTimeProvider;
     private readonly ILogger<ManualProductStockDecreaseCommandHandler> _logger;
+    private readonly IValidator<ManualProductStockDecreaseCommand> _validator;
 
-    public ManualProductStockDecreaseCommandHandler(IDocumentStore documentStore, IProductStreamStore productStreamStore, ILogger<ManualProductStockDecreaseCommandHandler> logger, TimeProvider dateTimeProvider)
+    public ManualProductStockDecreaseCommandHandler(IDocumentStore documentStore, IProductStreamStore productStreamStore, ILogger<ManualProductStockDecreaseCommandHandler> logger,
+        TimeProvider dateTimeProvider, IValidator<ManualProductStockDecreaseCommand> validator)
     {
         _documentStore = documentStore;
         _productStreamStore = productStreamStore;
         _logger = logger;
         _dateTimeProvider = dateTimeProvider;
+        _validator = validator;
     }
 
     public async Task<ErrorOr<Unit>> Handle(ManualProductStockDecreaseCommand request, CancellationToken cancellationToken)
     {
+        List<Error> validationErrors = await _validator.GetValidationErrorsAsync(request, cancellationToken);
+
+        if (validationErrors.Count > 0)
+        {
+            return validationErrors;
+        }
+
         _logger.LogInformation("Decreasing product {Sku} for quantity {Quantity}. Reason: {Reason}.", request.Sku, request.Quantity, request.Reason);
 
         await using var session = _documentStore.LightweightSession();

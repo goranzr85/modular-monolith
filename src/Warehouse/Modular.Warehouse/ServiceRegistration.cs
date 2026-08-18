@@ -5,13 +5,16 @@ using JasperFx.Events;
 using JasperFx.Events.Projections;
 using Marten;
 using MassTransit;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Modular.Warehouse.UseCases.Products;
+using Modular.Warehouse.UseCases.Products.Adjusted.Decreased;
+using Modular.Warehouse.UseCases.Products.Adjusted.Increased;
 using Modular.Warehouse.UseCases.Products.Create;
 using Modular.Warehouse.UseCases.Products.Models;
+using Modular.Warehouse.UseCases.Products.Receiving;
+using Modular.Warehouse.UseCases.Products.Shipping;
 using Weasel.Core;
 
 namespace Modular.Warehouse;
@@ -19,8 +22,12 @@ public static class ServiceRegistration
 {
     public static IServiceCollection AddWarehouse(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(ServiceRegistration).Assembly));
         services.AddValidatorsFromAssembly(typeof(ServiceRegistration).Assembly, includeInternalTypes: true);
+
+        services.AddScoped<ProductReceivingCommandHandler>();
+        services.AddScoped<ProductShippingCommandHandler>();
+        services.AddScoped<ManualProductStockIncreaseCommandHandler>();
+        services.AddScoped<ManualProductStockDecreaseCommandHandler>();
 
         string? connectionString = configuration.GetConnectionString("eshop");
 
