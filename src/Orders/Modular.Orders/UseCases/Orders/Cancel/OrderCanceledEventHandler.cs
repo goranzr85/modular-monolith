@@ -26,7 +26,7 @@ internal sealed class OrderCanceledEventHandler : IConsumer<OrderCanceledEvent>
         int[] productIds = results.Select(x => x.ProductId).ToArray();
 
         Product[] products = await _orderDbContext.Products
-            .FromSqlInterpolated($"SELECT * FROM Products WHERE Id IN ({string.Join(",", productIds)}) FOR UPDATE")
+            .FromSqlInterpolated($"SELECT * FROM \"Orders\".\"Products\" WHERE \"Id\" IN ({string.Join(",", productIds)}) FOR UPDATE")
             .ToArrayAsync();
 
         foreach (var result in results)

@@ -52,7 +52,7 @@ public sealed class ProcessOutboxMessagesJob : IJob
 
             await pipeline.ExecuteAsync(async ct =>
             {
-                await _publishEndpoint.Publish(integrationEvent.GetType(), integrationEvent, CancellationToken.None);
+                await _publishEndpoint.Publish(integrationEvent, integrationEvent.GetType(), CancellationToken.None);
             });
 
             outboxMessage!.ProcessedOnUtc = DateTime.UtcNow;

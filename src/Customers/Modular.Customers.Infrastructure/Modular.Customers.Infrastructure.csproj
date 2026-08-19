@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<ItemGroup>
+		<PackageReference Include="MassTransit.RabbitMQ" />
+		<PackageReference Include="Microsoft.Extensions.Resilience" />
+		<PackageReference Include="Newtonsoft.Json" />
+		<PackageReference Include="Quartz" />
+		<PackageReference Include="Quartz.Extensions.Hosting" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\Common\Modular.Common\Modular.Common.csproj" />
+	  <ProjectReference Include="..\Modular.Customers\Modular.Customers.csproj" />
+	</ItemGroup>
+
+</Project>

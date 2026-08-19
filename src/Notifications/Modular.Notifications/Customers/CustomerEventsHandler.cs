@@ -26,6 +26,7 @@ internal sealed class CustomerEventsHandler : IConsumer<CustomerCreatedEvent>,
         if (customer is not null)
         {
             _logger.LogWarning("Customer with ID {CustomerId} already exists in the database.", context.Message.Id);
+            return;
         }
 
         FullName fullName = context.Message.FullName;
@@ -49,11 +50,12 @@ internal sealed class CustomerEventsHandler : IConsumer<CustomerCreatedEvent>,
         if (customer is null)
         {
             _logger.LogWarning("Customer with ID {CustomerId} does not exist in the database.", context.Message.CustomerId);
+            return;
         }
 
         FullName fullName = context.Message.FullName;
 
-        customer!.FullName = CustomerFullName.Create(fullName.FirstName, fullName.MiddleName, fullName.LastName)!.Value!;
+        customer.FullName = CustomerFullName.Create(fullName.FirstName, fullName.MiddleName, fullName.LastName)!.Value!;
 
         _dbContext.Customers.Update(customer);
         await _dbContext.SaveChangesAsync();
@@ -66,11 +68,12 @@ internal sealed class CustomerEventsHandler : IConsumer<CustomerCreatedEvent>,
         if (customer is null)
         {
             _logger.LogWarning("Customer with ID {CustomerId} does not exist in the database.", context.Message.CustomerId);
+            return;
         }
 
         var contact = context.Message.ContactInfo;
 
-        customer!.Contact = new CustomerContact
+        customer.Contact = new CustomerContact
         (
             contact.Email,
             contact.PhoneNumber,

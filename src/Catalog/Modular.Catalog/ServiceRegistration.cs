@@ -27,7 +27,7 @@ public static class ServiceRegistration
         });
 
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(ServiceRegistration).Assembly));
-        services.AddValidatorsFromAssembly(typeof(ServiceRegistration).Assembly);
+        services.AddValidatorsFromAssembly(typeof(ServiceRegistration).Assembly, includeInternalTypes: true);
 
         return services;
     }

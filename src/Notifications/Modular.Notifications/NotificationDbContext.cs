@@ -84,7 +84,7 @@ public sealed class NotificationDbContext : DbContext
                   .IsRequired();
 
             entity.Property(e => e.ProcessedAt)
-                  .IsRequired();
+                  .IsRequired(false);
         });
     }
 }

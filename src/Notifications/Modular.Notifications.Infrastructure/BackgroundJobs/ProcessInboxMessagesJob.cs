@@ -16,7 +16,7 @@ public sealed class ProcessInboxMessagesJob : IJob
     private readonly ILogger<ProcessInboxMessagesJob> _logger;
 
     public ProcessInboxMessagesJob(NotificationDbContext notificationDbContext,
-        [FromKeyedServices(NotificationSenderFactory.Key)] INotificationSender notificationSender,
+        INotificationSender notificationSender,
         ILogger<ProcessInboxMessagesJob> logger)
     {
         _notificationDbContext = notificationDbContext;

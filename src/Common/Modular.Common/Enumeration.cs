@@ -43,19 +43,31 @@ public abstract class Enumeration<TEnum> : IEquatable<Enumeration<TEnum>>
 
     private static Dictionary<int, TEnum> CreateEnumerationsByValue()
     {
-        return typeof(TEnum)
-            .GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.DeclaredOnly)
-            .Where(f => f.FieldType == typeof(TEnum))
-            .Select(f => (TEnum)f.GetValue(null)!)
-            .ToDictionary(e => e.Value);
+        return GetEnumerationInstances().ToDictionary(e => e.Value);
     }
 
     private static Dictionary<string, TEnum> CreateEnumerationsByName()
     {
-        return typeof(TEnum)
-            .GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.DeclaredOnly)
+        return GetEnumerationInstances().ToDictionary(e => e.Name);
+    }
+
+    private static IEnumerable<TEnum> GetEnumerationInstances()
+    {
+        const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Public
+            | System.Reflection.BindingFlags.Static
+            | System.Reflection.BindingFlags.DeclaredOnly;
+
+        // Instances may be exposed as either static readonly fields or static properties, so both are scanned.
+        IEnumerable<TEnum> fromFields = typeof(TEnum)
+            .GetFields(flags)
             .Where(f => f.FieldType == typeof(TEnum))
-            .Select(f => (TEnum)f.GetValue(null)!)
-            .ToDictionary(e => e.Name);
+            .Select(f => (TEnum)f.GetValue(null)!);
+
+        IEnumerable<TEnum> fromProperties = typeof(TEnum)
+            .GetProperties(flags)
+            .Where(p => p.PropertyType == typeof(TEnum) && p.GetIndexParameters().Length == 0)
+            .Select(p => (TEnum)p.GetValue(null)!);
+
+        return fromFields.Concat(fromProperties);
     }
 }
