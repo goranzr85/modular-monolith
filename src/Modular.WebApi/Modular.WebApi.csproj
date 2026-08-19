@@ -11,10 +11,8 @@
 
 	<ItemGroup>
 		<PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" />
+		<PackageReference Include="Aspire.RabbitMQ.Client" />
 		<PackageReference Include="Carter" />
-		<PackageReference Include="CommunityToolkit.Aspire.MassTransit.RabbitMQ" />
-		<PackageReference Include="MassTransit" />
-		<PackageReference Include="MassTransit.RabbitMQ" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" />
 		<PackageReference Include="Microsoft.CodeAnalysis.Common" />
@@ -33,6 +31,7 @@
 		<ProjectReference Include="..\Notifications\Modular.Notifications.Infrastructure\Modular.Notifications.Infrastructure.csproj" />
 		<ProjectReference Include="..\Notifications\Modular.Notifications\Modular.Notifications.csproj" />
 		<ProjectReference Include="..\Orders\Modular.Orders\Modular.Orders.csproj" />
+		<ProjectReference Include="..\Payments\Modular.Payments\Modular.Payments.csproj" />
 		<ProjectReference Include="..\Warehouse\Modular.Warehouse\Modular.Warehouse.csproj" />
 	</ItemGroup>
 

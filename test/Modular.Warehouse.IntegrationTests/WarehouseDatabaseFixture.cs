@@ -1,13 +1,16 @@
 using JasperFx;
 using JasperFx.Events;
-using MassTransit;
-using MassTransit.Testing;
 using Marten;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Modular.Common.Events;
+using Modular.Common.Messaging;
+using RabbitMQ.Client;
 using Testcontainers.PostgreSql;
+using Testcontainers.RabbitMq;
 using Xunit;
 
 namespace Modular.Warehouse.IntegrationTests;
@@ -15,28 +18,39 @@ namespace Modular.Warehouse.IntegrationTests;
 public sealed class WarehouseTestApp : IAsyncDisposable
 {
     public required ServiceProvider Services { get; init; }
-    public required ITestHarness Harness { get; init; }
+    public required IIntegrationEventPublisher Publisher { get; init; }
+    public required IConnection Connection { get; init; }
+    public required IReadOnlyList<IHostedService> HostedServices { get; init; }
 
     public async ValueTask DisposeAsync()
     {
-        await Harness.Stop();
+        foreach (IHostedService hostedService in HostedServices)
+        {
+            await hostedService.StopAsync(CancellationToken.None);
+        }
+
+        await Connection.DisposeAsync();
         await Services.DisposeAsync();
     }
 }
 
-// Only the (expensive-to-start) Postgres container is shared across a collection; each test builds and
-// starts its own DI container + MassTransit test harness against that database (see the Notifications
-// module tests for why: sharing one long-lived harness across many tests proved flaky).
+// Only the (expensive-to-start) containers are shared across a collection; each test builds and starts
+// its own DI container + RabbitMQ connection against that broker (see the Notifications module tests for
+// why: sharing one long-lived app across many tests proved flaky).
 public sealed class WarehouseDatabaseFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder()
+    private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder()
         .WithImage("postgres:16-alpine")
         .WithDatabase("eshop")
         .Build();
 
+    private readonly RabbitMqContainer _rabbitContainer = new RabbitMqBuilder()
+        .WithImage("rabbitmq:4-management-alpine")
+        .Build();
+
     public async Task InitializeAsync()
     {
-        await _container.StartAsync();
+        await Task.WhenAll(_postgresContainer.StartAsync(), _rabbitContainer.StartAsync());
 
         await using WarehouseTestApp app = await CreateAppAsync();
         await using AsyncServiceScope scope = app.Services.CreateAsyncScope();
@@ -45,7 +59,7 @@ public sealed class WarehouseDatabaseFixture : IAsyncLifetime
 
     public async Task<WarehouseTestApp> CreateAppAsync()
     {
-        string connectionString = _container.GetConnectionString();
+        string connectionString = _postgresContainer.GetConnectionString();
 
         IConfiguration configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -73,21 +87,35 @@ public sealed class WarehouseDatabaseFixture : IAsyncLifetime
             return opts;
         });
 
-        services.AddMassTransitTestHarness(cfg =>
-        {
-            cfg.AddConsumer<Modular.Warehouse.UseCases.Products.Create.ProductCreatedNotificationHandler>();
-        });
+        ConnectionFactory factory = new() { Uri = new Uri(_rabbitContainer.GetConnectionString()) };
+        IConnection connection = await factory.CreateConnectionAsync();
+        services.AddSingleton(connection);
+        services.AddSingleton<IIntegrationEventPublisher, RabbitMqIntegrationEventPublisher>();
+
+        services.AddScoped<Modular.Warehouse.UseCases.Products.Create.ProductCreatedNotificationHandler>();
+        services.AddHostedService<RabbitMqConsumerHostedService<Modular.Warehouse.UseCases.Products.Create.ProductCreatedNotificationHandler>>();
 
         ServiceProvider provider = services.BuildServiceProvider();
-        ITestHarness harness = provider.GetRequiredService<ITestHarness>();
-        await harness.Start();
 
-        return new WarehouseTestApp { Services = provider, Harness = harness };
+        List<IHostedService> hostedServices = provider.GetServices<IHostedService>().ToList();
+        foreach (IHostedService hostedService in hostedServices)
+        {
+            await hostedService.StartAsync(CancellationToken.None);
+        }
+
+        return new WarehouseTestApp
+        {
+            Services = provider,
+            Publisher = provider.GetRequiredService<IIntegrationEventPublisher>(),
+            Connection = connection,
+            HostedServices = hostedServices
+        };
     }
 
     public async Task DisposeAsync()
     {
-        await _container.DisposeAsync();
+        await _rabbitContainer.DisposeAsync();
+        await _postgresContainer.DisposeAsync();
     }
 }
 

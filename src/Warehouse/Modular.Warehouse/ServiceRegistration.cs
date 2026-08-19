@@ -4,10 +4,10 @@ using JasperFx;
 using JasperFx.Events;
 using JasperFx.Events.Projections;
 using Marten;
-using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Modular.Common.Messaging;
 using Modular.Warehouse.UseCases.Products;
 using Modular.Warehouse.UseCases.Products.Adjusted.Decreased;
 using Modular.Warehouse.UseCases.Products.Adjusted.Increased;
@@ -46,17 +46,10 @@ public static class ServiceRegistration
         return services;
     }
 
-    public static void WarehouseEndpoints(this IRabbitMqBusFactoryConfigurator configurator, IBusRegistrationContext context)
+    public static void AddWarehouseConsumers(this IServiceCollection services, IConfiguration configuration)
     {
-        configurator.ReceiveEndpoint("warehouse-product-created-queue", e =>
-        {
-            e.ConfigureConsumer<ProductCreatedNotificationHandler>(context);
-        });
-    }
-
-    public static void AddWarehouseConsumers(this IBusRegistrationConfigurator brc, IConfiguration configuration, IServiceCollection services)
-    {
-        brc.AddConsumer<ProductCreatedNotificationHandler>();
+        services.AddScoped<ProductCreatedNotificationHandler>();
+        services.AddHostedService<RabbitMqConsumerHostedService<ProductCreatedNotificationHandler>>();
 
         string? connectionString = configuration.GetConnectionString("eshop");
 

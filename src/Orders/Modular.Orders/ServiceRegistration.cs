@@ -1,7 +1,7 @@
-﻿using MassTransit;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Modular.Common.Messaging;
 using Modular.Orders.UseCases.Orders.Cancel;
 using Modular.Orders.UseCases.Orders.Change.AddProducts;
 using Modular.Orders.UseCases.Orders.Change.ChangeProductQuantity.Decrease;
@@ -38,27 +38,27 @@ public static class ServiceRegistration
         services.AddScoped<IncreaseProductQuantityCommandHandler>();
         services.AddScoped<DecreaseProductQuantityCommandHandler>();
 
-        services.AddScoped<ProductCreatedEventHandler>();
-
         return services;
     }
 
-    public static void ReceiveOrderEndpoints(this IRabbitMqBusFactoryConfigurator configurator, IBusRegistrationContext context)
+    public static IServiceCollection AddOrderConsumers(this IServiceCollection services)
     {
-        configurator.ReceiveEndpoint("order-product-created-queue", e =>
-        {
-            e.ConfigureConsumer<ProductCreatedEventHandler>(context);
-        });
+        services.AddScoped<ProductCreatedEventHandler>();
+        services.AddScoped<ProductReceivedEventHandler>();
+        services.AddScoped<OrderCreatedEventHandler>();
+        services.AddScoped<OrderCanceledEventHandler>();
+        services.AddScoped<OrderItemAddedEventHandler>();
+        services.AddScoped<OrderItemRemovedEventHandler>();
+        services.AddScoped<OrderSubmittedOrchestration>();
 
-        configurator.ReceiveEndpoint("order-product-received-queue", e =>
-        {
-            e.ConfigureConsumer<ProductReceivedEventHandler>(context);
-        });
-    }
+        services.AddHostedService<RabbitMqConsumerHostedService<ProductCreatedEventHandler>>();
+        services.AddHostedService<RabbitMqConsumerHostedService<ProductReceivedEventHandler>>();
+        services.AddHostedService<RabbitMqConsumerHostedService<OrderCreatedEventHandler>>();
+        services.AddHostedService<RabbitMqConsumerHostedService<OrderCanceledEventHandler>>();
+        services.AddHostedService<RabbitMqConsumerHostedService<OrderItemAddedEventHandler>>();
+        services.AddHostedService<RabbitMqConsumerHostedService<OrderItemRemovedEventHandler>>();
+        services.AddHostedService<RabbitMqConsumerHostedService<OrderSubmittedOrchestration>>();
 
-    public static void AddOrderConsumers(this IBusRegistrationConfigurator brc)
-    {
-        brc.AddConsumer<ProductCreatedEventHandler>();
-        brc.AddConsumer<ProductReceivedEventHandler>();
+        return services;
     }
 }

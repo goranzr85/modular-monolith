@@ -1,4 +1,3 @@
-using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Modular.Common;
@@ -14,15 +13,15 @@ public sealed class ProcessOutboxMessagesJob : IJob
 {
     private readonly CustomerDbContext _customerDbContext;
     private readonly ILogger<ProcessOutboxMessagesJob> _logger;
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IIntegrationEventPublisher _publisher;
     private readonly ResiliencePipelineProvider<string> _pipelineProvider;
 
     public ProcessOutboxMessagesJob(CustomerDbContext customerDbContext, ILogger<ProcessOutboxMessagesJob> logger,
-        IPublishEndpoint publishEndpoint, ResiliencePipelineProvider<string> pipelineProvider)
+        IIntegrationEventPublisher publisher, ResiliencePipelineProvider<string> pipelineProvider)
     {
         _customerDbContext = customerDbContext;
         _logger = logger;
-        _publishEndpoint = publishEndpoint;
+        _publisher = publisher;
         _pipelineProvider = pipelineProvider;
     }
 
@@ -50,7 +49,7 @@ public sealed class ProcessOutboxMessagesJob : IJob
 
             await pipeline.ExecuteAsync(async ct =>
             {
-                await _publishEndpoint.Publish(integrationEvent, integrationEvent.GetType(), CancellationToken.None);
+                await _publisher.PublishAsync(integrationEvent, ct);
             });
 
             outboxMessage.ProcessedOnUtc = DateTime.UtcNow;

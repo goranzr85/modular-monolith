@@ -1,7 +1,7 @@
-﻿using MassTransit;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Modular.Common.Messaging;
 using Modular.Notifications.Customers;
 using Modular.Notifications.Orders;
 
@@ -22,27 +22,17 @@ public static class ServiceRegistration
             });
         });
 
-        services.AddScoped<OrderShippedNotificationHandler>();
-        services.AddScoped<CustomerEventsHandler>();
         return services;
     }
 
-    public static void ReceiveNotificationsEndpoints(this IRabbitMqBusFactoryConfigurator configurator, IBusRegistrationContext context)
+    public static IServiceCollection AddNotificationConsumers(this IServiceCollection services)
     {
-        configurator.ReceiveEndpoint("notification-customer-queue", e =>
-        {
-            e.ConfigureConsumer<CustomerEventsHandler>(context);
-        });
+        services.AddScoped<CustomerEventsHandler>();
+        services.AddScoped<OrderShippedNotificationHandler>();
 
-        configurator.ReceiveEndpoint("notification-order-shipped-queue", e =>
-        {
-            e.ConfigureConsumer<OrderShippedNotificationHandler>(context);
-        });
-    }
+        services.AddHostedService<RabbitMqConsumerHostedService<CustomerEventsHandler>>();
+        services.AddHostedService<RabbitMqConsumerHostedService<OrderShippedNotificationHandler>>();
 
-    public static void AddNotificationConsumers(this IBusRegistrationConfigurator brc)
-    {
-        brc.AddConsumer<CustomerEventsHandler>();
-        brc.AddConsumer<OrderShippedNotificationHandler>();
+        return services;
     }
 }

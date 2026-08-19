@@ -1,5 +1,3 @@
-using MassTransit;
-using MassTransit.Testing;
 using Marten;
 using Microsoft.Extensions.DependencyInjection;
 using Modular.Catalog.IntegrationEvents;
@@ -30,12 +28,10 @@ public sealed class ProductCreatedNotificationHandlerTests
         string sku = NewSku();
         ProductCreatedIntegrationEvent createdEvent = new(sku, "Test Product", "A product used for testing.", Price.Create(9.99m));
 
-        await app.Harness.Bus.Publish(createdEvent);
-        Assert.True(await app.Harness.Consumed.Any<ProductCreatedIntegrationEvent>());
-        Assert.False(await app.Harness.Published.Any<Fault<ProductCreatedIntegrationEvent>>());
+        await app.Publisher.PublishAsync(createdEvent);
 
         await using IDocumentSession session = store.LightweightSession();
-        Product? product = await session.LoadAsync<Product>(sku);
+        Product? product = await Eventually.WaitForAsync(() => session.LoadAsync<Product>(sku));
 
         Assert.NotNull(product);
         Assert.Equal("Test Product", product.Name);
@@ -52,15 +48,17 @@ public sealed class ProductCreatedNotificationHandlerTests
         string sku = NewSku();
         ProductCreatedIntegrationEvent createdEvent = new(sku, "Test Product", "A product used for testing.", Price.Create(9.99m));
 
-        await app.Harness.Bus.Publish(createdEvent);
-        Assert.True(await app.Harness.Consumed.Any<ProductCreatedIntegrationEvent>());
-
-        await app.Harness.Bus.Publish(createdEvent);
-        Assert.True(await app.Harness.Consumed.Any<ProductCreatedIntegrationEvent>(x => x.Context.Message.Sku == sku));
-        Assert.False(await app.Harness.Published.Any<Fault<ProductCreatedIntegrationEvent>>());
+        await app.Publisher.PublishAsync(createdEvent);
 
         await using IDocumentSession session = store.LightweightSession();
-        Product? product = await session.LoadAsync<Product>(sku);
+        Product? product = await Eventually.WaitForAsync(() => session.LoadAsync<Product>(sku));
+        Assert.NotNull(product);
+
+        await app.Publisher.PublishAsync(createdEvent);
+        await Task.Delay(TimeSpan.FromSeconds(1));
+
+        await using IDocumentSession verifySession = store.LightweightSession();
+        product = await verifySession.LoadAsync<Product>(sku);
         Assert.NotNull(product);
         Assert.Equal(0u, product.Quantity);
     }

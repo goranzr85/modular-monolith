@@ -2,7 +2,6 @@
 using JasperFx.Events.Projections;
 using Marten;
 using Marten.Subscriptions;
-using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Modular.Common.Events;
@@ -24,7 +23,7 @@ internal sealed class IntegrationEventPublisher : SubscriptionBase
     {
         using var scope = _serviceProvider.CreateScope();
 
-        var publishEndpoint = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
+        var publisher = scope.ServiceProvider.GetRequiredService<IIntegrationEventPublisher>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<IntegrationEventPublisher>>();
 
         foreach (var @event in page.Events)
@@ -60,7 +59,7 @@ internal sealed class IntegrationEventPublisher : SubscriptionBase
 
             if (message is not null)
             {
-                await publishEndpoint.Publish(message, cancellationToken);
+                await publisher.PublishAsync(message, cancellationToken);
             }
             else
             {

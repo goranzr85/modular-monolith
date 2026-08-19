@@ -1,22 +1,22 @@
-﻿using MassTransit;
+﻿using Modular.Common.Events;
 using Modular.Orders.Integrations;
 using Modular.Payments.IntegrationEvents;
 
 namespace Modular.Payments;
 
-public class ProcessPaymentHandler : IConsumer<ProcessPayment>
+public class ProcessPaymentHandler : IIntegrationEventConsumer<ProcessPayment>
 {
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IIntegrationEventPublisher _publisher;
 
-    public ProcessPaymentHandler(IPublishEndpoint publishEndpoint)
+    public ProcessPaymentHandler(IIntegrationEventPublisher publisher)
     {
-        _publishEndpoint = publishEndpoint;
+        _publisher = publisher;
     }
 
-    public async Task Consume(ConsumeContext<ProcessPayment> context)
+    public async Task ConsumeAsync(ProcessPayment message, CancellationToken cancellationToken)
     {
         // process payment logic here
 
-        await _publishEndpoint.Publish(new PaymentProcessedIntegrationEvent(context.Message.OrderId));
+        await _publisher.PublishAsync(new PaymentProcessedIntegrationEvent(message.OrderId), cancellationToken);
     }
 }

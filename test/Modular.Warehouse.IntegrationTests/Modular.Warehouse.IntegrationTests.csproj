@@ -13,9 +13,9 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Testcontainers.PostgreSql" />
+		<PackageReference Include="Testcontainers.RabbitMq" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" />
 		<PackageReference Include="Microsoft.Extensions.Logging" />
-		<PackageReference Include="MassTransit.TestFramework" />
 		<PackageReference Include="Marten" />
 	</ItemGroup>
 

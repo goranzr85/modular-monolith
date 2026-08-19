@@ -73,12 +73,24 @@ Modules using EF Core (Catalog, Orders, Notifications, Customers) follow an outb
 3. A per-module Quartz job (`<Module>.Infrastructure/BackgroundJobs/ProcessOutboxMessagesJob`, registered
    via `Register<Module>sBackgroundJobs()`) polls unprocessed outbox rows on a timer, deserializes them,
    runs them through a module-specific `DomainToIntegrationEventConverter` (a `switch` mapping each known
-   domain event type to its public integration event), and publishes via MassTransit
-   (`IPublishEndpoint.Publish`) wrapped in a Polly resilience pipeline (retry, exponential backoff+jitter —
-   pipeline registered under `Constants.ResiliencePipelineName`).
-4. Other modules consume integration events with MassTransit consumers registered via each module's
-   `Add<Module>Consumers(...)` extension, wired up centrally in `Modular.WebApi/Program.cs` inside
-   `builder.AddMassTransitRabbitMq(...)`.
+   domain event type to its public integration event — Orders is the exception, see below), and publishes
+   via `Modular.Common.Events.IIntegrationEventPublisher` (backed by `RabbitMqIntegrationEventPublisher`, a
+   thin `RabbitMQ.Client` wrapper — one fanout exchange per message CLR type, named by `Type.FullName`)
+   wrapped in a Polly resilience pipeline (retry, exponential backoff+jitter — pipeline registered under
+   `Constants.ResiliencePipelineName`).
+4. Other modules consume integration events by implementing `IIntegrationEventConsumer<TMessage>` and
+   registering a `RabbitMqConsumerHostedService<TConsumer>` (`Modular.Common.Messaging`) per consumer class
+   via each module's `Add<Module>Consumers(...)` extension, wired up centrally in
+   `Modular.WebApi/Program.cs`. The host reflects over every `IIntegrationEventConsumer<T>` the consumer
+   implements, binds one durable queue (kebab-case of the consumer's class name) to each message type's
+   exchange, and dispatches by the AMQP `type` property; failed deliveries retry in-process (5 attempts)
+   before nacking to a per-queue dead-letter exchange. There is no message broker framework (MassTransit)
+   in this codebase — RabbitMQ.Client is used directly; see `src/Common/Modular.Common/Messaging/`.
+
+Orders' outbox job is the exception to the converter step: it publishes its raw domain events directly
+(`OrderCreatedEvent`, `OrderItemAddedEvent`, etc.) with no `DomainToIntegrationEventConverter`, because
+several of its own domain-event types are consumed back within the Orders module itself (e.g.
+`OrderCreatedEventHandler`, `OrderItemAddedEventHandler`) rather than exposed as a separate public contract.
 
 When adding a new domain event that should cross module boundaries: add the domain event, add its public
 integration event record in `Modular.<Module>.IntegrationEvents`, and add a case to that module's

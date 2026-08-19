@@ -1,4 +1,3 @@
-using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Modular.Common;
@@ -54,8 +53,10 @@ public sealed class ProcessInboxMessagesJobTests
             Products = [("Widget", 2u, Price.Create(9.99m))],
             TotalAmounts = Price.Create(19.98m),
         };
-        await app.Harness.Bus.Publish(shippedEvent);
-        Assert.True(await app.Harness.Consumed.Any<OrderShippedIntegrationEvent>());
+        await app.Publisher.PublishAsync(shippedEvent);
+        InboxMessage? received = await Eventually.WaitForAsync(() => dbContext.InboxMessages.AsNoTracking()
+            .FirstOrDefaultAsync(m => m.MessageType == nameof(OrderShippedIntegrationEvent) && m.Payload.Contains(orderId.ToString())));
+        Assert.NotNull(received);
 
         ProcessInboxMessagesJob job = ActivatorUtilities.CreateInstance<ProcessInboxMessagesJob>(scope.ServiceProvider);
         await job.Execute(null!);

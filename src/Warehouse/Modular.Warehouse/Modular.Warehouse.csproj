@@ -4,8 +4,6 @@
 		<PackageReference Include="FluentValidation" />
 		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
 		<PackageReference Include="Marten" />
-		<PackageReference Include="MassTransit" />
-		<PackageReference Include="MassTransit.RabbitMQ" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
@@ -16,6 +14,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\..\Catalog\Modular.ProductIntegrationEvents\Modular.Catalog.IntegrationEvents.csproj" />
 		<ProjectReference Include="..\..\Common\Modular.Authorization\Modular.Authorization.csproj" />
+		<ProjectReference Include="..\..\Common\Modular.Common\Modular.Common.csproj" />
 		<ProjectReference Include="..\Modular.Warehouse.IntegrationEvents\Modular.Warehouse.IntegrationEvents.csproj" />
 	</ItemGroup>
 
