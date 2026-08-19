@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Common\Modular.Common\Modular.Common.csproj" />
     <ProjectReference Include="..\..\Orders\Modular.Orders.IntegrationEvents\Modular.Orders.Integrations.csproj" />
     <ProjectReference Include="..\Modular.Payments.IntegrationEvents\Modular.Payments.IntegrationEvents.csproj" />
   </ItemGroup>

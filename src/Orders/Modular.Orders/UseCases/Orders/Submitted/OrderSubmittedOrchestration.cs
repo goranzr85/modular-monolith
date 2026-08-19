@@ -1,73 +1,85 @@
-﻿using MassTransit;
-using MassTransit.Initializers;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Modular.Common.Events;
 using Modular.Orders.Integrations;
 using Modular.Orders.UseCases.Orders.Models;
 using Modular.Payments.IntegrationEvents;
 using Modular.Warehouse.IntegrationEvents;
 
 namespace Modular.Orders.UseCases.Orders.Submitted;
-internal sealed class OrderSubmittedOrchestration : IConsumer<OrderSubmittedEvent>,
-    IConsumer<PaymentProcessedIntegrationEvent>,
-    IConsumer<ProductShippedIntegrationEvent>,
-    IConsumer<OrderShippedEvent>
+internal sealed class OrderSubmittedOrchestration : IIntegrationEventConsumer<OrderSubmittedEvent>,
+    IIntegrationEventConsumer<PaymentProcessedIntegrationEvent>,
+    IIntegrationEventConsumer<ProductShippedIntegrationEvent>,
+    IIntegrationEventConsumer<OrderShippedEvent>
 {
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IIntegrationEventPublisher _publisher;
     private readonly OrderDbContext _orderDbContext;
     private readonly ILogger<OrderSubmittedOrchestration> _logger;
 
-    public OrderSubmittedOrchestration(IPublishEndpoint publishEndpoint, OrderDbContext orderDbContext, ILogger<OrderSubmittedOrchestration> logger)
+    public OrderSubmittedOrchestration(IIntegrationEventPublisher publisher, OrderDbContext orderDbContext, ILogger<OrderSubmittedOrchestration> logger)
     {
-        _publishEndpoint = publishEndpoint;
+        _publisher = publisher;
         _orderDbContext = orderDbContext;
         _logger = logger;
     }
 
-    public async Task Consume(ConsumeContext<OrderSubmittedEvent> context)
+    public async Task ConsumeAsync(OrderSubmittedEvent message, CancellationToken cancellationToken)
     {
-        ProcessPayment processPayment = new(context.Message.OrderId, context.Message.CustomerId, context.Message.TotalAmount);
-        await _publishEndpoint.Publish(processPayment);
+        ProcessPayment processPayment = new(message.OrderId, message.CustomerId, message.TotalAmount);
+        await _publisher.PublishAsync(processPayment, cancellationToken);
     }
 
-    public async Task Consume(ConsumeContext<PaymentProcessedIntegrationEvent> context)
-    {
-        List<OrderItem> orderItems = await _orderDbContext.Orders
-            .SingleOrDefaultAsync(o => o.Id == context.Message.OrderId)
-            .Select(o => o!.Items);
-
-        ShipProduct shipProduct = new(context.Message.OrderId, orderItems.Select(oi => (oi.Product.SKU, oi.Quantity)).ToArray());
-
-        await _publishEndpoint.Publish(shipProduct);
-    }
-
-    public async Task Consume(ConsumeContext<ProductShippedIntegrationEvent> context)
+    public async Task ConsumeAsync(PaymentProcessedIntegrationEvent message, CancellationToken cancellationToken)
     {
         Order? order = await _orderDbContext.Orders
             .Include(o => o.Items)
-            .SingleOrDefaultAsync(o => o.Id == context.Message.OrderId);
+            .ThenInclude(oi => oi.Product)
+            .SingleOrDefaultAsync(o => o.Id == message.OrderId, cancellationToken);
 
         if (order is null)
         {
-            _logger.LogError("Order {OrderId} not found for shipping confirmation.", context.Message.OrderId);
+            _logger.LogError("Order {OrderId} not found for payment confirmation.", message.OrderId);
             return;
         }
 
-        order.MarkItemAsShipped(context.Message.Sku);
+        ShipProduct shipProduct = new(message.OrderId, order.Items.Select(oi => (oi.Product.SKU, oi.Quantity)).ToArray());
+
+        await _publisher.PublishAsync(shipProduct, cancellationToken);
     }
 
-    public async Task Consume(ConsumeContext<OrderShippedEvent> context)
+    public async Task ConsumeAsync(ProductShippedIntegrationEvent message, CancellationToken cancellationToken)
     {
-        OrderShippedIntegrationEvent orderShippedIntegrationEvent = await _orderDbContext.Orders
-            .FirstAsync(o => o.Id == context.Message.Orderid)
-            .Select(o => new OrderShippedIntegrationEvent
-            {
-                OrderId = o.Id,
-                CustomerId = o.CustomerId,
-                ShippedDate = DateOnly.FromDateTime(o.ShippedDate!.Value.Date),
-                Products = o.Items.Select(i => (i.Product.Name, i.Quantity, i.Price)).ToArray(),
-            });
+        Order? order = await _orderDbContext.Orders
+            .Include(o => o.Items)
+            .ThenInclude(oi => oi.Product)
+            .SingleOrDefaultAsync(o => o.Id == message.OrderId, cancellationToken);
 
-        await _publishEndpoint.Publish(orderShippedIntegrationEvent);
+        if (order is null)
+        {
+            _logger.LogError("Order {OrderId} not found for shipping confirmation.", message.OrderId);
+            return;
+        }
+
+        order.MarkItemAsShipped(message.Sku);
+
+        await _orderDbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task ConsumeAsync(OrderShippedEvent message, CancellationToken cancellationToken)
+    {
+        Order order = await _orderDbContext.Orders
+            .Include(o => o.Items)
+            .ThenInclude(oi => oi.Product)
+            .FirstAsync(o => o.Id == message.Orderid, cancellationToken);
+
+        OrderShippedIntegrationEvent orderShippedIntegrationEvent = new()
+        {
+            OrderId = order.Id,
+            CustomerId = order.CustomerId,
+            ShippedDate = DateOnly.FromDateTime(order.ShippedDate!.Value.Date),
+            Products = order.Items.Select(i => (i.Product.Name, i.Quantity, i.Price)).ToArray(),
+        };
+
+        await _publisher.PublishAsync(orderShippedIntegrationEvent, cancellationToken);
     }
 }

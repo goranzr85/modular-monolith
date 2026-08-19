@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Modular.Common.Events;
+using Modular.Orders.UseCases.Orders.Submitted;
 using Testcontainers.PostgreSql;
 using Xunit;
 
@@ -33,6 +35,10 @@ public sealed class OrderDatabaseFixture : IAsyncLifetime
         ServiceCollection services = new();
         services.AddLogging();
         services.RegisterOrderModule(configuration);
+
+        services.AddSingleton<FakeIntegrationEventPublisher>();
+        services.AddSingleton<IIntegrationEventPublisher>(sp => sp.GetRequiredService<FakeIntegrationEventPublisher>());
+        services.AddScoped<OrderSubmittedOrchestration>();
 
         _serviceProvider = services.BuildServiceProvider();
 

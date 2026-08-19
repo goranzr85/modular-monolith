@@ -1,15 +1,10 @@
-﻿using MassTransit;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Modular.Common.Events;
 using Modular.Orders.UseCases.Common;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Modular.Orders.UseCases.Orders.Change.RemoveProducts;
 
-internal sealed class OrderItemRemovedEventHandler : IConsumer<OrderItemRemovedEvent>
+internal sealed class OrderItemRemovedEventHandler : IIntegrationEventConsumer<OrderItemRemovedEvent>
 {
     private readonly OrderDbContext _orderDbContext;
 
@@ -18,20 +13,20 @@ internal sealed class OrderItemRemovedEventHandler : IConsumer<OrderItemRemovedE
         _orderDbContext = orderDbContext;
     }
 
-    public async Task Consume(ConsumeContext<OrderItemRemovedEvent> context)
+    public async Task ConsumeAsync(OrderItemRemovedEvent message, CancellationToken cancellationToken)
     {
-        int productId = context.Message.ProductId;
+        int productId = message.ProductId;
 
-        await using var transaction = await _orderDbContext.Database.BeginTransactionAsync();
+        await using var transaction = await _orderDbContext.Database.BeginTransactionAsync(cancellationToken);
 
         Product product = await _orderDbContext.Products
             .FromSqlInterpolated($"SELECT * FROM Products WHERE Id = {productId} FOR UPDATE")
-            .FirstAsync();
+            .FirstAsync(cancellationToken);
 
-        product.IncreaseStock(context.Message.Quantity);
+        product.IncreaseStock(message.Quantity);
 
-        await _orderDbContext.SaveChangesAsync();
+        await _orderDbContext.SaveChangesAsync(cancellationToken);
 
-        await transaction.CommitAsync();
+        await transaction.CommitAsync(cancellationToken);
     }
 }

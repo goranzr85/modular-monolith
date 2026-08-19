@@ -1,9 +1,10 @@
-﻿using MassTransit;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Modular.Common;
+using Modular.Common.Events;
 using Modular.Orders;
 using Newtonsoft.Json;
+using Polly.Registry;
 using Quartz;
 
 namespace Modular.Orders.Infrastructure.BackgroundJobs;
@@ -11,19 +12,18 @@ namespace Modular.Orders.Infrastructure.BackgroundJobs;
 [DisallowConcurrentExecution]
 public sealed class ProcessOutboxMessagesJob : IJob
 {
-    // TODO: add polly to try again 
-    // TODO: use masstransit and rabbitmq for publishing events
-
     private readonly OrderDbContext _orderDbContext;
     private readonly ILogger<ProcessOutboxMessagesJob> _logger;
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IIntegrationEventPublisher _publisher;
+    private readonly ResiliencePipelineProvider<string> _pipelineProvider;
 
     public ProcessOutboxMessagesJob(OrderDbContext orderDbContext, ILogger<ProcessOutboxMessagesJob> logger,
-        IPublishEndpoint publishEndpoint)
+        IIntegrationEventPublisher publisher, ResiliencePipelineProvider<string> pipelineProvider)
     {
         _orderDbContext = orderDbContext;
         _logger = logger;
-        _publishEndpoint = publishEndpoint;
+        _publisher = publisher;
+        _pipelineProvider = pipelineProvider;
     }
 
 
@@ -47,7 +47,12 @@ public sealed class ProcessOutboxMessagesJob : IJob
                 continue;
             }
 
-            await _publishEndpoint.Publish(domainEvent);
+            var pipeline = _pipelineProvider.GetPipeline(Constants.ResiliencePipelineName);
+
+            await pipeline.ExecuteAsync(async ct =>
+            {
+                await _publisher.PublishAsync(domainEvent, ct);
+            });
 
             outboxMessage!.ProcessedOnUtc = DateTime.UtcNow;
         }

@@ -1,14 +1,14 @@
-﻿using MassTransit;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Modular.Common.Events;
 using Modular.Customers.IntegrationEvents;
 using CustomerContact = Modular.Common.User.Contact;
 using CustomerFullName = Modular.Common.User.FullName;
 
 namespace Modular.Notifications.Customers;
-internal sealed class CustomerEventsHandler : IConsumer<CustomerCreatedEvent>,
-    IConsumer<CustomerChangedNameEvent>,
-    IConsumer<CustomerChangedContactInformationEvent>
+internal sealed class CustomerEventsHandler : IIntegrationEventConsumer<CustomerCreatedEvent>,
+    IIntegrationEventConsumer<CustomerChangedNameEvent>,
+    IIntegrationEventConsumer<CustomerChangedContactInformationEvent>
 {
     private readonly NotificationDbContext _dbContext;
     private readonly ILogger<CustomerEventsHandler> _logger;
@@ -19,59 +19,59 @@ internal sealed class CustomerEventsHandler : IConsumer<CustomerCreatedEvent>,
         _logger = logger;
     }
 
-    public async Task Consume(ConsumeContext<CustomerCreatedEvent> context)
+    public async Task ConsumeAsync(CustomerCreatedEvent message, CancellationToken cancellationToken)
     {
-        Customer? customer = await _dbContext.Customers.FirstOrDefaultAsync(c => c.Id == context.Message.Id);
+        Customer? customer = await _dbContext.Customers.FirstOrDefaultAsync(c => c.Id == message.Id, cancellationToken);
 
         if (customer is not null)
         {
-            _logger.LogWarning("Customer with ID {CustomerId} already exists in the database.", context.Message.Id);
+            _logger.LogWarning("Customer with ID {CustomerId} already exists in the database.", message.Id);
             return;
         }
 
-        FullName fullName = context.Message.FullName;
-        ContactInfo contact = context.Message.Contact;
+        FullName fullName = message.FullName;
+        ContactInfo contact = message.Contact;
 
         customer = new Customer
         {
-            Id = context.Message.Id,
+            Id = message.Id,
             FullName = CustomerFullName.Create(fullName.FirstName, fullName.MiddleName, fullName.LastName)!.Value!,
             Contact = new CustomerContact(contact.Email, contact.PhoneNumber, contact.PrimaryContactType),
         };
 
-        await _dbContext.Customers.AddAsync(customer);
-        await _dbContext.SaveChangesAsync();
+        await _dbContext.Customers.AddAsync(customer, cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task Consume(ConsumeContext<CustomerChangedNameEvent> context)
+    public async Task ConsumeAsync(CustomerChangedNameEvent message, CancellationToken cancellationToken)
     {
-        Customer? customer = await _dbContext.Customers.FirstOrDefaultAsync(c => c.Id == context.Message.CustomerId);
+        Customer? customer = await _dbContext.Customers.FirstOrDefaultAsync(c => c.Id == message.CustomerId, cancellationToken);
 
         if (customer is null)
         {
-            _logger.LogWarning("Customer with ID {CustomerId} does not exist in the database.", context.Message.CustomerId);
+            _logger.LogWarning("Customer with ID {CustomerId} does not exist in the database.", message.CustomerId);
             return;
         }
 
-        FullName fullName = context.Message.FullName;
+        FullName fullName = message.FullName;
 
         customer.FullName = CustomerFullName.Create(fullName.FirstName, fullName.MiddleName, fullName.LastName)!.Value!;
 
         _dbContext.Customers.Update(customer);
-        await _dbContext.SaveChangesAsync();
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task Consume(ConsumeContext<CustomerChangedContactInformationEvent> context)
+    public async Task ConsumeAsync(CustomerChangedContactInformationEvent message, CancellationToken cancellationToken)
     {
-        Customer? customer = await _dbContext.Customers.FirstOrDefaultAsync(c => c.Id == context.Message.CustomerId);
+        Customer? customer = await _dbContext.Customers.FirstOrDefaultAsync(c => c.Id == message.CustomerId, cancellationToken);
 
         if (customer is null)
         {
-            _logger.LogWarning("Customer with ID {CustomerId} does not exist in the database.", context.Message.CustomerId);
+            _logger.LogWarning("Customer with ID {CustomerId} does not exist in the database.", message.CustomerId);
             return;
         }
 
-        var contact = context.Message.ContactInfo;
+        var contact = message.ContactInfo;
 
         customer.Contact = new CustomerContact
         (
@@ -81,6 +81,6 @@ internal sealed class CustomerEventsHandler : IConsumer<CustomerCreatedEvent>,
         );
 
         _dbContext.Customers.Update(customer);
-        await _dbContext.SaveChangesAsync();
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 }

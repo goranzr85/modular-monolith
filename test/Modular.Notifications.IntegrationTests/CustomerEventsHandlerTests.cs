@@ -1,5 +1,3 @@
-using MassTransit;
-using MassTransit.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Modular.Common.User;
@@ -34,10 +32,10 @@ public sealed class CustomerEventsHandlerTests
             new Address("123 Main St", "Springfield", "IL", "62704"),
             new ContactInfo("john@example.com", null, PrimaryContactType.Email));
 
-        await app.Harness.Bus.Publish(createdEvent);
-        Assert.True(await app.Harness.Consumed.Any<CustomerCreatedEvent>());
+        await app.Publisher.PublishAsync(createdEvent);
 
-        Customer? customer = await dbContext.Customers.AsNoTracking().FirstOrDefaultAsync(c => c.Id == customerId);
+        Customer? customer = await Eventually.WaitForAsync(() =>
+            dbContext.Customers.AsNoTracking().FirstOrDefaultAsync(c => c.Id == customerId));
         Assert.NotNull(customer);
         Assert.Equal("John", customer.FullName.FirstName);
         Assert.Equal("john@example.com", customer.Contact.Email);
@@ -58,11 +56,13 @@ public sealed class CustomerEventsHandlerTests
             new Address("456 Oak Ave", "Chicago", "IL", "60601"),
             new ContactInfo("jane@example.com", null, PrimaryContactType.Email));
 
-        await app.Harness.Bus.Publish(createdEvent);
-        Assert.True(await app.Harness.Consumed.Any<CustomerCreatedEvent>());
+        await app.Publisher.PublishAsync(createdEvent);
+        Customer? customer = await Eventually.WaitForAsync(() =>
+            dbContext.Customers.AsNoTracking().FirstOrDefaultAsync(c => c.Id == customerId));
+        Assert.NotNull(customer);
 
-        await app.Harness.Bus.Publish(createdEvent);
-        Assert.True(await app.Harness.Consumed.Any<CustomerCreatedEvent>(x => x.Context.Message.Id == customerId));
+        await app.Publisher.PublishAsync(createdEvent);
+        await Task.Delay(TimeSpan.FromSeconds(1));
 
         int count = await dbContext.Customers.AsNoTracking().CountAsync(c => c.Id == customerId);
         Assert.Equal(1, count);
@@ -76,16 +76,18 @@ public sealed class CustomerEventsHandlerTests
         NotificationDbContext dbContext = scope.ServiceProvider.GetRequiredService<NotificationDbContext>();
 
         Guid customerId = Guid.NewGuid();
-        await app.Harness.Bus.Publish(new CustomerCreatedEvent(customerId,
+        await app.Publisher.PublishAsync(new CustomerCreatedEvent(customerId,
             new FullName("John", null, "Doe"),
             new Address("123 Main St", "Springfield", "IL", "62704"),
             new ContactInfo("john@example.com", null, PrimaryContactType.Email)));
-        Assert.True(await app.Harness.Consumed.Any<CustomerCreatedEvent>());
+        Customer? created = await Eventually.WaitForAsync(() =>
+            dbContext.Customers.AsNoTracking().FirstOrDefaultAsync(c => c.Id == customerId));
+        Assert.NotNull(created);
 
-        await app.Harness.Bus.Publish(new CustomerChangedNameEvent(customerId, new FullName("Jonathan", "Q", "Doer")));
-        Assert.True(await app.Harness.Consumed.Any<CustomerChangedNameEvent>());
+        await app.Publisher.PublishAsync(new CustomerChangedNameEvent(customerId, new FullName("Jonathan", "Q", "Doer")));
 
-        Customer? customer = await dbContext.Customers.AsNoTracking().FirstOrDefaultAsync(c => c.Id == customerId);
+        Customer? customer = await Eventually.WaitForAsync(() =>
+            dbContext.Customers.AsNoTracking().FirstOrDefaultAsync(c => c.Id == customerId && c.FullName.FirstName == "Jonathan"));
         Assert.NotNull(customer);
         Assert.Equal("Jonathan", customer.FullName.FirstName);
         Assert.Equal("Doer", customer.FullName.LastName);
@@ -98,10 +100,11 @@ public sealed class CustomerEventsHandlerTests
         // Customer with the null-forgiving operator, throwing a NullReferenceException at runtime.
         await using NotificationTestApp app = await _fixture.CreateAppAsync();
 
-        await app.Harness.Bus.Publish(new CustomerChangedNameEvent(Guid.NewGuid(), new FullName("Ghost", null, "Customer")));
+        await app.Publisher.PublishAsync(new CustomerChangedNameEvent(Guid.NewGuid(), new FullName("Ghost", null, "Customer")));
 
-        Assert.True(await app.Harness.Consumed.Any<CustomerChangedNameEvent>());
-        Assert.False(await app.Harness.Published.Any<Fault<CustomerChangedNameEvent>>());
+        // A failing consumer exhausts retries and dead-letters the message; a successful one never does.
+        await Task.Delay(TimeSpan.FromSeconds(2));
+        Assert.False(await DeadLetterQueueHasMessageAsync<CustomerEventsHandler>(app.Connection));
     }
 
     [Fact]
@@ -112,17 +115,19 @@ public sealed class CustomerEventsHandlerTests
         NotificationDbContext dbContext = scope.ServiceProvider.GetRequiredService<NotificationDbContext>();
 
         Guid customerId = Guid.NewGuid();
-        await app.Harness.Bus.Publish(new CustomerCreatedEvent(customerId,
+        await app.Publisher.PublishAsync(new CustomerCreatedEvent(customerId,
             new FullName("John", null, "Doe"),
             new Address("123 Main St", "Springfield", "IL", "62704"),
             new ContactInfo("john@example.com", null, PrimaryContactType.Email)));
-        Assert.True(await app.Harness.Consumed.Any<CustomerCreatedEvent>());
+        Customer? created = await Eventually.WaitForAsync(() =>
+            dbContext.Customers.AsNoTracking().FirstOrDefaultAsync(c => c.Id == customerId));
+        Assert.NotNull(created);
 
-        await app.Harness.Bus.Publish(new CustomerChangedContactInformationEvent(customerId,
+        await app.Publisher.PublishAsync(new CustomerChangedContactInformationEvent(customerId,
             new ContactInfo(null, "+15551234567", PrimaryContactType.Phone)));
-        Assert.True(await app.Harness.Consumed.Any<CustomerChangedContactInformationEvent>());
 
-        Customer? customer = await dbContext.Customers.AsNoTracking().FirstOrDefaultAsync(c => c.Id == customerId);
+        Customer? customer = await Eventually.WaitForAsync(() =>
+            dbContext.Customers.AsNoTracking().FirstOrDefaultAsync(c => c.Id == customerId && c.Contact.Phone == "+15551234567"));
         Assert.NotNull(customer);
         Assert.Equal("+15551234567", customer.Contact.Phone);
         Assert.Equal(PrimaryContactType.Phone, customer.Contact.PrimaryContactType);
@@ -134,10 +139,21 @@ public sealed class CustomerEventsHandlerTests
         // Regression test: same missing-return bug as the name-change handler.
         await using NotificationTestApp app = await _fixture.CreateAppAsync();
 
-        await app.Harness.Bus.Publish(new CustomerChangedContactInformationEvent(Guid.NewGuid(),
+        await app.Publisher.PublishAsync(new CustomerChangedContactInformationEvent(Guid.NewGuid(),
             new ContactInfo("ghost@example.com", null, PrimaryContactType.Email)));
 
-        Assert.True(await app.Harness.Consumed.Any<CustomerChangedContactInformationEvent>());
-        Assert.False(await app.Harness.Published.Any<Fault<CustomerChangedContactInformationEvent>>());
+        // A failing consumer exhausts retries and dead-letters the message; a successful one never does.
+        await Task.Delay(TimeSpan.FromSeconds(2));
+        Assert.False(await DeadLetterQueueHasMessageAsync<CustomerEventsHandler>(app.Connection));
+    }
+
+    private static async Task<bool> DeadLetterQueueHasMessageAsync<TConsumer>(RabbitMQ.Client.IConnection connection)
+    {
+        string deadLetterQueue = $"{Modular.Common.Messaging.RabbitMqIntegrationEventNaming.QueueFor(typeof(TConsumer))}.dlq";
+
+        await using RabbitMQ.Client.IChannel channel = await connection.CreateChannelAsync();
+        RabbitMQ.Client.BasicGetResult? result = await channel.BasicGetAsync(deadLetterQueue, autoAck: false);
+
+        return result is not null;
     }
 }

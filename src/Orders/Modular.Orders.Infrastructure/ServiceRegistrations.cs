@@ -1,6 +1,6 @@
-﻿using MassTransit;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Modular.Orders.Infrastructure.BackgroundJobs;
+using Polly;
 using Quartz;
 
 namespace Modular.Orders.Infrastructure;
@@ -9,6 +9,18 @@ public static class ServiceRegistrations
     public static IServiceCollection RegisterCatalogsBackgroundJobs(this IServiceCollection services)
     {
         services.RegisterQuartz();
+
+        services.AddResiliencePipeline(Constants.ResiliencePipelineName, builder =>
+        {
+            builder.AddRetry(new Polly.Retry.RetryStrategyOptions
+            {
+                ShouldHandle = new PredicateBuilder().Handle<Exception>(),
+                Delay = TimeSpan.FromSeconds(2),
+                MaxRetryAttempts = 3,
+                BackoffType = DelayBackoffType.Exponential,
+                UseJitter = true
+            });
+        });
 
         return services;
     }

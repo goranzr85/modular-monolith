@@ -1,10 +1,10 @@
-﻿using MassTransit;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Modular.Common.Events;
 using Modular.Orders.UseCases.Common;
 
 namespace Modular.Orders.UseCases.Orders.Cancel;
 
-internal sealed class OrderCanceledEventHandler : IConsumer<OrderCanceledEvent>
+internal sealed class OrderCanceledEventHandler : IIntegrationEventConsumer<OrderCanceledEvent>
 {
     private readonly OrderDbContext _orderDbContext;
 
@@ -13,21 +13,21 @@ internal sealed class OrderCanceledEventHandler : IConsumer<OrderCanceledEvent>
         _orderDbContext = orderDbContext;
     }
 
-    public async Task Consume(ConsumeContext<OrderCanceledEvent> context)
+    public async Task ConsumeAsync(OrderCanceledEvent message, CancellationToken cancellationToken)
     {
         var results = await _orderDbContext.Orders
-            .Where(x => x.Id == context.Message.OrderId)
+            .Where(x => x.Id == message.OrderId)
             .SelectMany(x => x.Items)
             .Select(x => new { x.ProductId, x.Quantity })
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
 
-        await using var transaction = await _orderDbContext.Database.BeginTransactionAsync();
+        await using var transaction = await _orderDbContext.Database.BeginTransactionAsync(cancellationToken);
 
         int[] productIds = results.Select(x => x.ProductId).ToArray();
 
         Product[] products = await _orderDbContext.Products
             .FromSqlInterpolated($"SELECT * FROM \"Orders\".\"Products\" WHERE \"Id\" IN ({string.Join(",", productIds)}) FOR UPDATE")
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
 
         foreach (var result in results)
         {
@@ -35,8 +35,8 @@ internal sealed class OrderCanceledEventHandler : IConsumer<OrderCanceledEvent>
             product.IncreaseStock(result.Quantity);
         }
 
-        await _orderDbContext.SaveChangesAsync();
+        await _orderDbContext.SaveChangesAsync(cancellationToken);
 
-        await transaction.CommitAsync();
+        await transaction.CommitAsync(cancellationToken);
     }
 }

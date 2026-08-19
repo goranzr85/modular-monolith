@@ -1,5 +1,4 @@
 using ErrorOr;
-using MassTransit.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Modular.Common;
@@ -33,7 +32,9 @@ public sealed class ProcessOutboxMessagesJobTests
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
         CreateCustomerCommandHandler createHandler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
         CustomerDbContext dbContext = scope.ServiceProvider.GetRequiredService<CustomerDbContext>();
-        ITestHarness harness = scope.ServiceProvider.GetRequiredService<ITestHarness>();
+
+        await using PublishedMessageListener<CustomerCreatedEvent> listener =
+            await PublishedMessageListener<CustomerCreatedEvent>.StartAsync(_fixture.Connection);
 
         string email = $"{Unique()}@example.com";
         CreateCustomerCommand createCommand = new("John", null, "Doe", ValidAddress(), null, email, null, PrimaryContactType.Email);
@@ -50,7 +51,7 @@ public sealed class ProcessOutboxMessagesJobTests
         Assert.NotNull(outboxMessage);
         Assert.NotNull(outboxMessage.ProcessedOnUtc);
 
-        Assert.True(await harness.Published.Any<CustomerCreatedEvent>(e => e.Context.Message.Id == customerId));
+        Assert.True(await listener.AnyAsync(e => e.Id == customerId));
     }
 
     [Fact]
@@ -60,7 +61,6 @@ public sealed class ProcessOutboxMessagesJobTests
         CreateCustomerCommandHandler createHandler = scope.ServiceProvider.GetRequiredService<CreateCustomerCommandHandler>();
         ChangeCustomerCommandHandler changeHandler = scope.ServiceProvider.GetRequiredService<ChangeCustomerCommandHandler>();
         CustomerDbContext dbContext = scope.ServiceProvider.GetRequiredService<CustomerDbContext>();
-        ITestHarness harness = scope.ServiceProvider.GetRequiredService<ITestHarness>();
 
         string email = $"{Unique()}@example.com";
         CreateCustomerCommand createCommand = new("Jane", null, "Roe", ValidAddress(), null, email, null, PrimaryContactType.Email);
@@ -70,6 +70,9 @@ public sealed class ProcessOutboxMessagesJobTests
 
         ProcessOutboxMessagesJob job = ActivatorUtilities.CreateInstance<ProcessOutboxMessagesJob>(scope.ServiceProvider);
         await job.Execute(null!);
+
+        await using PublishedMessageListener<CustomerChangedShippingAddressEvent> listener =
+            await PublishedMessageListener<CustomerChangedShippingAddressEvent>.StartAsync(_fixture.Connection);
 
         AddressDto newShipping = new("999 Pine Rd", "Austin", "73301", "TX");
         ChangeCustomerCommand changeCommand = new(customerId, "Jane", null, "Roe", ValidAddress(), newShipping, email, null, PrimaryContactType.Email);
@@ -84,6 +87,6 @@ public sealed class ProcessOutboxMessagesJobTests
                 && m.ProcessedOnUtc != null);
         Assert.True(processed);
 
-        Assert.True(await harness.Published.Any<CustomerChangedShippingAddressEvent>(e => e.Context.Message.CustomerId == customerId));
+        Assert.True(await listener.AnyAsync(e => e.CustomerId == customerId));
     }
 }

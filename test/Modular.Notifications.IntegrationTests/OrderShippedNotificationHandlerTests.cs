@@ -1,5 +1,3 @@
-using MassTransit;
-using MassTransit.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Modular.Common;
@@ -38,12 +36,10 @@ public sealed class OrderShippedNotificationHandlerTests
             TotalAmounts = Price.Create(19.98m),
         };
 
-        await app.Harness.Bus.Publish(shippedEvent);
-        Assert.True(await app.Harness.Consumed.Any<OrderShippedIntegrationEvent>());
-        Assert.False(await app.Harness.Published.Any<Fault<OrderShippedIntegrationEvent>>());
+        await app.Publisher.PublishAsync(shippedEvent);
 
-        InboxMessage? inboxMessage = await dbContext.InboxMessages.AsNoTracking()
-            .FirstOrDefaultAsync(m => m.MessageType == nameof(OrderShippedIntegrationEvent) && m.Payload.Contains(orderId.ToString()));
+        InboxMessage? inboxMessage = await Eventually.WaitForAsync(() => dbContext.InboxMessages.AsNoTracking()
+            .FirstOrDefaultAsync(m => m.MessageType == nameof(OrderShippedIntegrationEvent) && m.Payload.Contains(orderId.ToString())));
 
         Assert.NotNull(inboxMessage);
         Assert.Null(inboxMessage.ProcessedAt);

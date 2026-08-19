@@ -1,15 +1,17 @@
 using Carter;
-using MassTransit;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Modular.Authorization;
 using Modular.Catalog;
 using Modular.Catalog.Infrastructure;
+using Modular.Common.Events;
+using Modular.Common.Messaging;
 using Modular.Customers;
 using Modular.Customers.Infrastructure;
 using Modular.Notifications;
 using Modular.Notifications.Infrastructure;
 using Modular.Orders;
+using Modular.Payments;
 using Modular.Warehouse;
 using Modular.WebApi;
 using Modular.WebApi.MIddlewares;
@@ -47,23 +49,14 @@ builder.Services.AddAuthentication()
     options.Audience = "account";
 });
 
-builder.AddMassTransitRabbitMq("rabbitmq", options =>
-{
-    options.DisableTelemetry = false;
-},
-    consumers =>
-    {
-        consumers.SetKebabCaseEndpointNameFormatter();
-        consumers.AddOrderConsumers();
-        consumers.AddWarehouseConsumers(builder.Configuration, builder.Services);
-        consumers.AddNotificationConsumers();
+builder.AddRabbitMQClient("rabbitmq");
 
-        consumers.AddConfigureEndpointsCallback((context, name, cfg) =>
-        {
-            cfg.UseMessageRetry(r => r.Immediate(5));
-        });
-    }
-);
+builder.Services.AddSingleton<IIntegrationEventPublisher, RabbitMqIntegrationEventPublisher>();
+
+builder.Services.AddOrderConsumers();
+builder.Services.AddWarehouseConsumers(builder.Configuration);
+builder.Services.AddNotificationConsumers();
+builder.Services.AddPaymentsConsumers();
 
 builder.Services.AddTransient<IClaimsTransformation, KeycloakRolesClaimsTransformation>();
 

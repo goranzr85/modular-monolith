@@ -1,12 +1,14 @@
-using MassTransit;
-using MassTransit.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Modular.Common.Events;
+using Modular.Common.Messaging;
 using Modular.Customers.Infrastructure;
+using RabbitMQ.Client;
 using Testcontainers.PostgreSql;
+using Testcontainers.RabbitMq;
 using Xunit;
 
 namespace Modular.Customers.IntegrationTests;
@@ -23,24 +25,32 @@ internal sealed class NoopHostApplicationLifetime : IHostApplicationLifetime
 
 public sealed class CustomerDatabaseFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder()
+    private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder()
         .WithImage("postgres:16-alpine")
         .WithDatabase("eshop")
         .Build();
 
+    private readonly RabbitMqContainer _rabbitContainer = new RabbitMqBuilder()
+        .WithImage("rabbitmq:4-management-alpine")
+        .Build();
+
     private ServiceProvider? _serviceProvider;
+    private IConnection? _connection;
 
     public ServiceProvider Services => _serviceProvider
         ?? throw new InvalidOperationException($"{nameof(CustomerDatabaseFixture)} has not been initialized yet.");
 
+    public IConnection Connection => _connection
+        ?? throw new InvalidOperationException($"{nameof(CustomerDatabaseFixture)} has not been initialized yet.");
+
     public async Task InitializeAsync()
     {
-        await _container.StartAsync();
+        await Task.WhenAll(_postgresContainer.StartAsync(), _rabbitContainer.StartAsync());
 
         IConfiguration configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:eshop"] = _container.GetConnectionString()
+                ["ConnectionStrings:eshop"] = _postgresContainer.GetConnectionString()
             })
             .Build();
 
@@ -49,25 +59,32 @@ public sealed class CustomerDatabaseFixture : IAsyncLifetime
         services.AddSingleton<IHostApplicationLifetime, NoopHostApplicationLifetime>();
         services.RegisterCustomerModule(configuration);
         services.RegisterCustomersBackgroundJobs();
-        services.AddMassTransitTestHarness();
+
+        ConnectionFactory factory = new() { Uri = new Uri(_rabbitContainer.GetConnectionString()) };
+        _connection = await factory.CreateConnectionAsync();
+        services.AddSingleton(_connection);
+        services.AddSingleton<IIntegrationEventPublisher, RabbitMqIntegrationEventPublisher>();
 
         _serviceProvider = services.BuildServiceProvider();
 
         await using AsyncServiceScope scope = _serviceProvider.CreateAsyncScope();
         await scope.ServiceProvider.GetRequiredService<CustomerDbContext>().Database.MigrateAsync();
-
-        await _serviceProvider.GetRequiredService<ITestHarness>().Start();
     }
 
     public async Task DisposeAsync()
     {
         if (_serviceProvider is not null)
         {
-            await _serviceProvider.GetRequiredService<ITestHarness>().Stop();
             await _serviceProvider.DisposeAsync();
         }
 
-        await _container.DisposeAsync();
+        if (_connection is not null)
+        {
+            await _connection.DisposeAsync();
+        }
+
+        await _rabbitContainer.DisposeAsync();
+        await _postgresContainer.DisposeAsync();
     }
 }
 

@@ -1,13 +1,13 @@
 ﻿using Marten;
-using MassTransit;
 using Microsoft.Extensions.Logging;
 using Modular.Catalog.IntegrationEvents;
+using Modular.Common.Events;
 using Modular.Warehouse.SourceModels;
 using Modular.Warehouse.UseCases.Products.Models;
 
 namespace Modular.Warehouse.UseCases.Products.Create;
 
-internal sealed class ProductCreatedNotificationHandler : IConsumer<ProductCreatedIntegrationEvent>
+internal sealed class ProductCreatedNotificationHandler : IIntegrationEventConsumer<ProductCreatedIntegrationEvent>
 {
     private readonly IDocumentStore _documentStore;
     private readonly TimeProvider _dateTimeProvider;
@@ -20,13 +20,13 @@ internal sealed class ProductCreatedNotificationHandler : IConsumer<ProductCreat
         _dateTimeProvider = dateTimeProvider;
     }
 
-    public async Task Consume(ConsumeContext<ProductCreatedIntegrationEvent> context)
+    public async Task ConsumeAsync(ProductCreatedIntegrationEvent message, CancellationToken cancellationToken)
     {
-        string sku = context.Message.Sku;
+        string sku = message.Sku;
         _logger.LogInformation("Creating product {Sku}.", sku);
 
         await using var session = _documentStore.LightweightSession();
-        Product? product = await session.LoadAsync<Product>(sku, context.CancellationToken);
+        Product? product = await session.LoadAsync<Product>(sku, cancellationToken);
 
         if (product is not null)
         {
@@ -34,9 +34,9 @@ internal sealed class ProductCreatedNotificationHandler : IConsumer<ProductCreat
             return;
         }
 
-        ProductCreated productCreated = new(sku, context.Message.Name, _dateTimeProvider.GetUtcNow());
+        ProductCreated productCreated = new(sku, message.Name, _dateTimeProvider.GetUtcNow());
         session.Events.StartStream<Product>(sku, productCreated);
-        await session.SaveChangesAsync();
+        await session.SaveChangesAsync(cancellationToken);
 
         _logger.LogDebug("Creating product {Sku} succeeded.", sku);
 

@@ -1,35 +1,57 @@
-using MassTransit;
-using MassTransit.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Modular.Common;
+using Modular.Common.Events;
+using Modular.Common.Messaging;
 using Modular.Orders.Integrations;
 using Modular.Payments.IntegrationEvents;
+using RabbitMQ.Client;
+using Testcontainers.RabbitMq;
 using Xunit;
 
 namespace Modular.Payments.IntegrationTests;
 
 public sealed class ProcessPaymentHandlerTests : IAsyncLifetime
 {
+    private readonly RabbitMqContainer _rabbitContainer = new RabbitMqBuilder()
+        .WithImage("rabbitmq:4-management-alpine")
+        .Build();
+
     private ServiceProvider _provider = null!;
-    private ITestHarness _harness = null!;
+    private IConnection _connection = null!;
+    private IReadOnlyList<IHostedService> _hostedServices = null!;
 
     public async Task InitializeAsync()
     {
+        await _rabbitContainer.StartAsync();
+
+        ConnectionFactory factory = new() { Uri = new Uri(_rabbitContainer.GetConnectionString()) };
+        _connection = await factory.CreateConnectionAsync();
+
         _provider = new ServiceCollection()
-            .AddMassTransitTestHarness(cfg =>
-            {
-                cfg.AddConsumer<ProcessPaymentHandler>();
-            })
+            .AddLogging()
+            .AddSingleton(_connection)
+            .AddSingleton<IIntegrationEventPublisher, RabbitMqIntegrationEventPublisher>()
+            .AddPaymentsConsumers()
             .BuildServiceProvider(true);
 
-        _harness = _provider.GetRequiredService<ITestHarness>();
-        await _harness.Start();
+        _hostedServices = _provider.GetServices<IHostedService>().ToList();
+        foreach (IHostedService hostedService in _hostedServices)
+        {
+            await hostedService.StartAsync(CancellationToken.None);
+        }
     }
 
     public async Task DisposeAsync()
     {
-        await _harness.Stop();
+        foreach (IHostedService hostedService in _hostedServices)
+        {
+            await hostedService.StopAsync(CancellationToken.None);
+        }
+
+        await _connection.DisposeAsync();
         await _provider.DisposeAsync();
+        await _rabbitContainer.DisposeAsync();
     }
 
     [Fact]
@@ -38,10 +60,13 @@ public sealed class ProcessPaymentHandlerTests : IAsyncLifetime
         Guid orderId = Guid.NewGuid();
         Guid customerId = Guid.NewGuid();
 
-        await _harness.Bus.Publish(new ProcessPayment(orderId, customerId, Price.Create(49.99m)));
+        await using PublishedMessageListener<PaymentProcessedIntegrationEvent> listener =
+            await PublishedMessageListener<PaymentProcessedIntegrationEvent>.StartAsync(_connection);
 
-        Assert.True(await _harness.Consumed.Any<ProcessPayment>());
-        Assert.True(await _harness.Published.Any<PaymentProcessedIntegrationEvent>(e => e.Context.Message.OrderId == orderId));
+        IIntegrationEventPublisher publisher = _provider.GetRequiredService<IIntegrationEventPublisher>();
+        await publisher.PublishAsync(new ProcessPayment(orderId, customerId, Price.Create(49.99m)));
+
+        Assert.True(await listener.AnyAsync(e => e.OrderId == orderId));
     }
 
     [Fact]
@@ -52,9 +77,13 @@ public sealed class ProcessPaymentHandlerTests : IAsyncLifetime
         // amount, customer, or any real payment outcome.
         Guid orderId = Guid.NewGuid();
 
-        await _harness.Bus.Publish(new ProcessPayment(orderId, Guid.NewGuid(), Price.Create(0m)));
+        await using PublishedMessageListener<PaymentProcessedIntegrationEvent> listener =
+            await PublishedMessageListener<PaymentProcessedIntegrationEvent>.StartAsync(_connection);
 
-        Assert.True(await _harness.Published.Any<PaymentProcessedIntegrationEvent>(e => e.Context.Message.OrderId == orderId));
+        IIntegrationEventPublisher publisher = _provider.GetRequiredService<IIntegrationEventPublisher>();
+        await publisher.PublishAsync(new ProcessPayment(orderId, Guid.NewGuid(), Price.Create(0m)));
+
+        Assert.True(await listener.AnyAsync(e => e.OrderId == orderId));
     }
 
     [Fact]
@@ -63,10 +92,14 @@ public sealed class ProcessPaymentHandlerTests : IAsyncLifetime
         Guid firstOrderId = Guid.NewGuid();
         Guid secondOrderId = Guid.NewGuid();
 
-        await _harness.Bus.Publish(new ProcessPayment(firstOrderId, Guid.NewGuid(), Price.Create(10m)));
-        await _harness.Bus.Publish(new ProcessPayment(secondOrderId, Guid.NewGuid(), Price.Create(20m)));
+        await using PublishedMessageListener<PaymentProcessedIntegrationEvent> listener =
+            await PublishedMessageListener<PaymentProcessedIntegrationEvent>.StartAsync(_connection);
 
-        Assert.True(await _harness.Published.Any<PaymentProcessedIntegrationEvent>(e => e.Context.Message.OrderId == firstOrderId));
-        Assert.True(await _harness.Published.Any<PaymentProcessedIntegrationEvent>(e => e.Context.Message.OrderId == secondOrderId));
+        IIntegrationEventPublisher publisher = _provider.GetRequiredService<IIntegrationEventPublisher>();
+        await publisher.PublishAsync(new ProcessPayment(firstOrderId, Guid.NewGuid(), Price.Create(10m)));
+        await publisher.PublishAsync(new ProcessPayment(secondOrderId, Guid.NewGuid(), Price.Create(20m)));
+
+        Assert.True(await listener.AnyAsync(e => e.OrderId == firstOrderId));
+        Assert.True(await listener.AnyAsync(e => e.OrderId == secondOrderId));
     }
 }

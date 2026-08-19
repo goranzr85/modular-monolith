@@ -1,12 +1,12 @@
-﻿using MassTransit;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Modular.Catalog.IntegrationEvents;
+using Modular.Common.Events;
 using Modular.Orders.UseCases.Common;
 
 namespace Modular.Orders.UseCases.Products.Created;
 
-internal sealed class ProductCreatedEventHandler : IConsumer<ProductCreatedIntegrationEvent>
+internal sealed class ProductCreatedEventHandler : IIntegrationEventConsumer<ProductCreatedIntegrationEvent>
 {
     private readonly OrderDbContext _orderDbContext;
     private readonly ILogger<ProductCreatedEventHandler> _logger;
@@ -17,27 +17,27 @@ internal sealed class ProductCreatedEventHandler : IConsumer<ProductCreatedInteg
         _logger = logger;
     }
 
-    public async Task Consume(ConsumeContext<ProductCreatedIntegrationEvent> context)
+    public async Task ConsumeAsync(ProductCreatedIntegrationEvent message, CancellationToken cancellationToken)
     {
-        Product product = Product.Create(context.Message.Sku, context.Message.Name, context.Message.Description, context.Message.Price);
+        Product product = Product.Create(message.Sku, message.Name, message.Description, message.Price);
 
         if (product is null)
         {
-            _logger.LogError("Product {Sku} not created.", context.Message.Sku);
+            _logger.LogError("Product {Sku} not created.", message.Sku);
             return;
         }
 
-        bool productAlreadyExist = await _orderDbContext.Products.AnyAsync(p => p.SKU == context.Message.Sku);
+        bool productAlreadyExist = await _orderDbContext.Products.AnyAsync(p => p.SKU == message.Sku, cancellationToken);
 
         if (productAlreadyExist)
         {
-            _logger.LogError("Product {Sku} already exists.", context.Message.Sku);
+            _logger.LogError("Product {Sku} already exists.", message.Sku);
             return;
         }
 
-        await _orderDbContext.Products.AddAsync(product);
-        await _orderDbContext.SaveChangesAsync();
+        await _orderDbContext.Products.AddAsync(product, cancellationToken);
+        await _orderDbContext.SaveChangesAsync(cancellationToken);
 
-        _logger.LogInformation("Product created: {Sku}.", context.Message.Sku);
+        _logger.LogInformation("Product created: {Sku}.", message.Sku);
     }
 }
