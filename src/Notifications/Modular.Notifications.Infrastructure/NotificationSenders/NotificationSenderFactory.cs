@@ -1,7 +1,7 @@
 ﻿using ErrorOr;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Modular.Common;
 using Modular.Orders.Integrations;
 
 namespace Modular.Notifications.Infrastructure.NotificationSenders;

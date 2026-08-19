@@ -1,12 +1,10 @@
 using MassTransit;
 using MassTransit.Testing;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Modular.Common.Behaviors;
 using Modular.Customers.Infrastructure;
 using Testcontainers.PostgreSql;
 using Xunit;
@@ -51,7 +49,6 @@ public sealed class CustomerDatabaseFixture : IAsyncLifetime
         services.AddSingleton<IHostApplicationLifetime, NoopHostApplicationLifetime>();
         services.RegisterCustomerModule(configuration);
         services.RegisterCustomersBackgroundJobs();
-        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         services.AddMassTransitTestHarness();
 
         _serviceProvider = services.BuildServiceProvider();

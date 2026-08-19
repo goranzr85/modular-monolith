@@ -1,6 +1,5 @@
 ﻿using Carter;
 using ErrorOr;
-using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -14,11 +13,11 @@ public sealed class RemoveProductFromOrderEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/orders/remove/{orderId:guid}", async (Guid orderId, RemoveProductFromOrderRequest request, ISender sender, CancellationToken cancellationToken) =>
+        app.MapPost("/api/orders/remove/{orderId:guid}", async (Guid orderId, RemoveProductFromOrderRequest request, RemoveProductCommandHandler handler, CancellationToken cancellationToken) =>
         {
             RemoveProductCommand command = new(orderId, request.ProductId);
 
-            ErrorOr<Unit> response = await sender.Send(command, cancellationToken);
+            ErrorOr<Unit> response = await handler.Handle(command, cancellationToken);
 
             return response.ToResult(_ => Results.Ok());
         })

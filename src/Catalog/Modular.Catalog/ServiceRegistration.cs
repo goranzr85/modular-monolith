@@ -2,6 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Modular.Catalog.UseCases.Change;
+using Modular.Catalog.UseCases.Create;
 using Modular.Common;
 
 namespace Modular.Catalog;
@@ -26,8 +28,10 @@ public static class ServiceRegistration
             .AddInterceptors(interceptor);
         });
 
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(ServiceRegistration).Assembly));
         services.AddValidatorsFromAssembly(typeof(ServiceRegistration).Assembly, includeInternalTypes: true);
+
+        services.AddScoped<CreateProductCommandHandler>();
+        services.AddScoped<ChangeProductCommandHandler>();
 
         return services;
     }

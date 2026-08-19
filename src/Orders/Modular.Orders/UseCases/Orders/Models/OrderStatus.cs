@@ -1,5 +1,4 @@
 ﻿using ErrorOr;
-using MediatR;
 using Modular.Common;
 using Modular.Orders.Errors;
 

@@ -1,5 +1,4 @@
 ﻿using ErrorOr;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Modular.Orders.Errors;
@@ -7,9 +6,9 @@ using Modular.Orders.UseCases.Orders.Models;
 
 namespace Modular.Orders.UseCases.Orders.Create;
 
-internal sealed record CreateOrderCommand(Guid OrderId, DateTimeOffset OrderDate, Guid CustomerId, List<OrderItem> Items) : IRequest<ErrorOr<Guid>>;
+internal sealed record CreateOrderCommand(Guid OrderId, DateTimeOffset OrderDate, Guid CustomerId, List<OrderItem> Items);
 
-internal sealed class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, ErrorOr<Guid>>
+internal sealed class CreateOrderCommandHandler
 {
     private readonly OrderDbContext _orderDbContext;
     private readonly ILogger<CreateOrderCommandHandler> _logger;

@@ -1,5 +1,4 @@
 using ErrorOr;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Modular.Common;
@@ -32,9 +31,9 @@ public sealed class CreateOrderCommandTests
         // intentionally reflects that current behavior rather than an extended-price calculation.
         ErrorOr<Guid> result = await OrderTestHelpers.RunAsync(_fixture, async sp =>
         {
-            ISender sender = sp.GetRequiredService<ISender>();
+            CreateOrderCommandHandler handler = sp.GetRequiredService<CreateOrderCommandHandler>();
             List<OrderItem> items = [new OrderItem { ProductId = productId, Quantity = 3, Price = Price.Create(9.99m) }];
-            return await sender.Send(new CreateOrderCommand(orderId, DateTimeOffset.UtcNow, customerId, items));
+            return await handler.Handle(new CreateOrderCommand(orderId, DateTimeOffset.UtcNow, customerId, items), CancellationToken.None);
         });
 
         Assert.False(result.IsError);
@@ -63,14 +62,14 @@ public sealed class CreateOrderCommandTests
         ErrorOr<Guid> first = await OrderTestHelpers.RunAsync(_fixture, async sp =>
         {
             List<OrderItem> items = [new OrderItem { ProductId = productId, Quantity = 1, Price = Price.Create(9.99m) }];
-            return await sp.GetRequiredService<ISender>().Send(new CreateOrderCommand(orderId, DateTimeOffset.UtcNow, Guid.NewGuid(), items));
+            return await sp.GetRequiredService<CreateOrderCommandHandler>().Handle(new CreateOrderCommand(orderId, DateTimeOffset.UtcNow, Guid.NewGuid(), items), CancellationToken.None);
         });
         Assert.False(first.IsError);
 
         ErrorOr<Guid> second = await OrderTestHelpers.RunAsync(_fixture, async sp =>
         {
             List<OrderItem> items = [new OrderItem { ProductId = productId, Quantity = 1, Price = Price.Create(9.99m) }];
-            return await sp.GetRequiredService<ISender>().Send(new CreateOrderCommand(orderId, DateTimeOffset.UtcNow, Guid.NewGuid(), items));
+            return await sp.GetRequiredService<CreateOrderCommandHandler>().Handle(new CreateOrderCommand(orderId, DateTimeOffset.UtcNow, Guid.NewGuid(), items), CancellationToken.None);
         });
 
         Assert.True(second.IsError);
@@ -85,10 +84,10 @@ public sealed class CreateOrderCommandTests
         // guard clauses throw raw exceptions instead of the handler returning an ErrorOr validation error.
         await OrderTestHelpers.RunAsync(_fixture, async sp =>
         {
-            ISender sender = sp.GetRequiredService<ISender>();
+            CreateOrderCommandHandler handler = sp.GetRequiredService<CreateOrderCommandHandler>();
             CreateOrderCommand command = new(Guid.NewGuid(), DateTimeOffset.UtcNow, Guid.NewGuid(), []);
 
-            await Assert.ThrowsAsync<ArgumentException>(() => sender.Send(command));
+            await Assert.ThrowsAsync<ArgumentException>(() => handler.Handle(command, CancellationToken.None));
         });
     }
 }

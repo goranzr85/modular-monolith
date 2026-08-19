@@ -1,5 +1,4 @@
 ﻿using ErrorOr;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
@@ -8,9 +7,9 @@ using Modular.Orders.Errors;
 using Modular.Orders.UseCases.Orders.Models;
 
 namespace Modular.Orders.UseCases.Orders.Change.AddProducts;
-internal sealed record AddProductCommand(Guid OrderId, int ProductId, uint Quantity, Price Price) : IRequest<ErrorOr<Unit>>;
+internal sealed record AddProductCommand(Guid OrderId, int ProductId, uint Quantity, Price Price);
 
-internal sealed class AddProductCommandHandler : IRequestHandler<AddProductCommand, ErrorOr<Unit>>
+internal sealed class AddProductCommandHandler
 {
     private readonly OrderDbContext _orderDbContext;
     private readonly ILogger<AddProductCommandHandler> _logger;

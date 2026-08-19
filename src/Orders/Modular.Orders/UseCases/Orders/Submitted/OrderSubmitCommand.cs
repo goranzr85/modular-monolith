@@ -1,15 +1,15 @@
 ﻿using ErrorOr;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Modular.Common;
 using Modular.Orders.Errors;
 using Modular.Orders.UseCases.Orders.Models;
 
 namespace Modular.Orders.UseCases.Orders.Submitted;
 
-internal sealed record OrderSubmitCommand(Guid OrderId) : IRequest<ErrorOr<Unit>>;
+internal sealed record OrderSubmitCommand(Guid OrderId);
 
-internal sealed class OrderSubmitCommandHandler : IRequestHandler<OrderSubmitCommand, ErrorOr<Unit>>
+internal sealed class OrderSubmitCommandHandler
 {
     private readonly OrderDbContext _orderDbContext;
     private readonly ILogger<OrderSubmitCommandHandler> _logger;

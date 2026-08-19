@@ -6,6 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Modular.Authorization;
 using Modular.Common;
 using Modular.Customers.Models;
+using Modular.Customers.UseCases.Change;
+using Modular.Customers.UseCases.Create;
 
 namespace Modular.Customers;
 
@@ -29,8 +31,10 @@ public static class ServiceRegistration
         });
 
 
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(ServiceRegistration).Assembly));
         services.AddValidatorsFromAssembly(typeof(ServiceRegistration).Assembly, includeInternalTypes: true);
+
+        services.AddScoped<CreateCustomerCommandHandler>();
+        services.AddScoped<ChangeCustomerCommandHandler>();
 
         services.AddScoped<ContactFactory>();
 

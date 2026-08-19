@@ -1,15 +1,15 @@
 ﻿using ErrorOr;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Modular.Common;
 using Modular.Orders.Errors;
 using Modular.Orders.UseCases.Orders.Models;
 
 namespace Modular.Orders.UseCases.Orders.Change.ChangeProductQuantity.Decrease;
 
-internal sealed record DecreaseProductQuantityCommand(Guid OrderId, int ProductId, uint Quantity) : IRequest<ErrorOr<Unit>>;
+internal sealed record DecreaseProductQuantityCommand(Guid OrderId, int ProductId, uint Quantity);
 
-internal sealed class DecreaseProductQuantityCommandHandler : IRequestHandler<DecreaseProductQuantityCommand, ErrorOr<Unit>>
+internal sealed class DecreaseProductQuantityCommandHandler
 {
     private readonly OrderDbContext _orderDbContext;
     private readonly ILogger<DecreaseProductQuantityCommandHandler> _logger;

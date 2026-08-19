@@ -3,12 +3,10 @@ using JasperFx.Events;
 using MassTransit;
 using MassTransit.Testing;
 using Marten;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Modular.Common.Behaviors;
 using Testcontainers.PostgreSql;
 using Xunit;
 
@@ -60,7 +58,6 @@ public sealed class WarehouseDatabaseFixture : IAsyncLifetime
         services.AddLogging();
         services.AddSingleton(TimeProvider.System);
         services.AddWarehouse(configuration);
-        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
         services.AddMarten(_ =>
         {

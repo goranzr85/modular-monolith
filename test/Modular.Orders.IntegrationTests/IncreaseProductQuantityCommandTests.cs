@@ -1,5 +1,4 @@
 using ErrorOr;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Modular.Common;
@@ -30,7 +29,7 @@ public sealed class IncreaseProductQuantityCommandTests
         ErrorOr<Guid> result = await OrderTestHelpers.RunAsync(_fixture, async sp =>
         {
             List<OrderItem> items = [new OrderItem { ProductId = productId, Quantity = initialQuantity, Price = Price.Create(9.99m) }];
-            return await sp.GetRequiredService<ISender>().Send(new CreateOrderCommand(orderId, DateTimeOffset.UtcNow, Guid.NewGuid(), items));
+            return await sp.GetRequiredService<CreateOrderCommandHandler>().Handle(new CreateOrderCommand(orderId, DateTimeOffset.UtcNow, Guid.NewGuid(), items), CancellationToken.None);
         });
         Assert.False(result.IsError);
 
@@ -47,7 +46,7 @@ public sealed class IncreaseProductQuantityCommandTests
         (Guid orderId, int productId) = await SeedOrderWithItemAsync(initialQuantity: 5, stockQuantity: 100);
 
         ErrorOr<Unit> result = await OrderTestHelpers.RunAsync(_fixture, async sp =>
-            await sp.GetRequiredService<ISender>().Send(new IncreaseProductQuantityCommand(orderId, productId, 3)));
+            await sp.GetRequiredService<IncreaseProductQuantityCommandHandler>().Handle(new IncreaseProductQuantityCommand(orderId, productId, 3), CancellationToken.None));
 
         Assert.False(result.IsError);
 
@@ -68,7 +67,7 @@ public sealed class IncreaseProductQuantityCommandTests
             await OrderTestHelpers.SeedProductAsync(sp.GetRequiredService<OrderDbContext>(), stockQuantity: 100));
 
         ErrorOr<Unit> result = await OrderTestHelpers.RunAsync(_fixture, async sp =>
-            await sp.GetRequiredService<ISender>().Send(new IncreaseProductQuantityCommand(orderId, otherProductId, 3)));
+            await sp.GetRequiredService<IncreaseProductQuantityCommandHandler>().Handle(new IncreaseProductQuantityCommand(orderId, otherProductId, 3), CancellationToken.None));
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.NotFound, result.FirstError.Type);
@@ -81,7 +80,7 @@ public sealed class IncreaseProductQuantityCommandTests
         (Guid orderId, int productId) = await SeedOrderWithItemAsync(initialQuantity: 5, stockQuantity: 2);
 
         ErrorOr<Unit> result = await OrderTestHelpers.RunAsync(_fixture, async sp =>
-            await sp.GetRequiredService<ISender>().Send(new IncreaseProductQuantityCommand(orderId, productId, 5)));
+            await sp.GetRequiredService<IncreaseProductQuantityCommandHandler>().Handle(new IncreaseProductQuantityCommand(orderId, productId, 5), CancellationToken.None));
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.Validation, result.FirstError.Type);
@@ -95,7 +94,7 @@ public sealed class IncreaseProductQuantityCommandTests
             await OrderTestHelpers.SeedProductAsync(sp.GetRequiredService<OrderDbContext>(), stockQuantity: 100));
 
         ErrorOr<Unit> result = await OrderTestHelpers.RunAsync(_fixture, async sp =>
-            await sp.GetRequiredService<ISender>().Send(new IncreaseProductQuantityCommand(Guid.NewGuid(), productId, 1)));
+            await sp.GetRequiredService<IncreaseProductQuantityCommandHandler>().Handle(new IncreaseProductQuantityCommand(Guid.NewGuid(), productId, 1), CancellationToken.None));
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.NotFound, result.FirstError.Type);

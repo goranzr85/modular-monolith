@@ -1,16 +1,16 @@
 ﻿using ErrorOr;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
+using Modular.Common;
 using Modular.Orders.Errors;
 using Modular.Orders.UseCases.Orders.Models;
 
 namespace Modular.Orders.UseCases.Orders.Change.ChangeProductQuantity.Increase;
 
-internal sealed record IncreaseProductQuantityCommand(Guid OrderId, int ProductId, uint Quantity) : IRequest<ErrorOr<Unit>>;
+internal sealed record IncreaseProductQuantityCommand(Guid OrderId, int ProductId, uint Quantity);
 
-internal sealed class IncreaseProductQuantityCommandHandler : IRequestHandler<IncreaseProductQuantityCommand, ErrorOr<Unit>>
+internal sealed class IncreaseProductQuantityCommandHandler
 {
     private readonly OrderDbContext _orderDbContext;
     private readonly ILogger<IncreaseProductQuantityCommandHandler> _logger;

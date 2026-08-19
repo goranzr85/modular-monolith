@@ -1,12 +1,10 @@
 using Carter;
 using MassTransit;
-using MediatR;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Modular.Authorization;
 using Modular.Catalog;
 using Modular.Catalog.Infrastructure;
-using Modular.Common.Behaviors;
 using Modular.Customers;
 using Modular.Customers.Infrastructure;
 using Modular.Notifications;
@@ -41,7 +39,6 @@ builder.Services.AddCarter();
 builder.Services.AddExceptionHandler<CustomExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
 builder.Services.AddAuthentication()
     .AddKeycloakJwtBearer("keycloak", realm: "eshop-realm", options =>

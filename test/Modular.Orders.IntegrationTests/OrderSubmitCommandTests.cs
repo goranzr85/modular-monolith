@@ -1,5 +1,4 @@
 using ErrorOr;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Modular.Common;
@@ -31,7 +30,7 @@ public sealed class OrderSubmitCommandTests
         ErrorOr<Guid> result = await OrderTestHelpers.RunAsync(_fixture, async sp =>
         {
             List<OrderItem> items = [new OrderItem { ProductId = productId, Quantity = 1, Price = Price.Create(9.99m) }];
-            return await sp.GetRequiredService<ISender>().Send(new CreateOrderCommand(orderId, DateTimeOffset.UtcNow, Guid.NewGuid(), items));
+            return await sp.GetRequiredService<CreateOrderCommandHandler>().Handle(new CreateOrderCommand(orderId, DateTimeOffset.UtcNow, Guid.NewGuid(), items), CancellationToken.None);
         });
         Assert.False(result.IsError);
 
@@ -44,7 +43,7 @@ public sealed class OrderSubmitCommandTests
         Guid orderId = await SeedOrderAsync();
 
         ErrorOr<Unit> result = await OrderTestHelpers.RunAsync(_fixture, async sp =>
-            await sp.GetRequiredService<ISender>().Send(new OrderSubmitCommand(orderId)));
+            await sp.GetRequiredService<OrderSubmitCommandHandler>().Handle(new OrderSubmitCommand(orderId), CancellationToken.None));
 
         Assert.False(result.IsError);
 
@@ -60,7 +59,7 @@ public sealed class OrderSubmitCommandTests
     public async Task Handle_WithUnknownOrderId_ReturnsNotFound()
     {
         ErrorOr<Unit> result = await OrderTestHelpers.RunAsync(_fixture, async sp =>
-            await sp.GetRequiredService<ISender>().Send(new OrderSubmitCommand(Guid.NewGuid())));
+            await sp.GetRequiredService<OrderSubmitCommandHandler>().Handle(new OrderSubmitCommand(Guid.NewGuid()), CancellationToken.None));
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.NotFound, result.FirstError.Type);
@@ -73,11 +72,11 @@ public sealed class OrderSubmitCommandTests
         Guid orderId = await SeedOrderAsync();
 
         ErrorOr<Unit> first = await OrderTestHelpers.RunAsync(_fixture, async sp =>
-            await sp.GetRequiredService<ISender>().Send(new OrderSubmitCommand(orderId)));
+            await sp.GetRequiredService<OrderSubmitCommandHandler>().Handle(new OrderSubmitCommand(orderId), CancellationToken.None));
         Assert.False(first.IsError);
 
         ErrorOr<Unit> second = await OrderTestHelpers.RunAsync(_fixture, async sp =>
-            await sp.GetRequiredService<ISender>().Send(new OrderSubmitCommand(orderId)));
+            await sp.GetRequiredService<OrderSubmitCommandHandler>().Handle(new OrderSubmitCommand(orderId), CancellationToken.None));
 
         Assert.True(second.IsError);
         Assert.Equal("Order.OrderStatusIllegalTransition", second.FirstError.Code);
@@ -89,11 +88,11 @@ public sealed class OrderSubmitCommandTests
         Guid orderId = await SeedOrderAsync();
 
         ErrorOr<Unit> cancel = await OrderTestHelpers.RunAsync(_fixture, async sp =>
-            await sp.GetRequiredService<ISender>().Send(new CancelOrderCommand(orderId)));
+            await sp.GetRequiredService<CancelOrderCommandHandler>().Handle(new CancelOrderCommand(orderId), CancellationToken.None));
         Assert.False(cancel.IsError);
 
         ErrorOr<Unit> submit = await OrderTestHelpers.RunAsync(_fixture, async sp =>
-            await sp.GetRequiredService<ISender>().Send(new OrderSubmitCommand(orderId)));
+            await sp.GetRequiredService<OrderSubmitCommandHandler>().Handle(new OrderSubmitCommand(orderId), CancellationToken.None));
 
         Assert.True(submit.IsError);
         Assert.Equal("Order.OrderStatusIllegalTransition", submit.FirstError.Code);

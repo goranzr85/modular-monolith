@@ -1,5 +1,4 @@
 using ErrorOr;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Modular.Catalog.UseCases.Change;
@@ -21,10 +20,10 @@ public sealed class ChangeProductCommandTests
 
     private static string NewSku() => Guid.NewGuid().ToString("N")[..12];
 
-    private static async Task<string> SeedProductAsync(ISender sender)
+    private static async Task<string> SeedProductAsync(CreateProductCommandHandler handler)
     {
         string sku = NewSku();
-        ErrorOr<Unit> result = await sender.Send(new CreateProductCommand(sku, "Original Name", "Original description.", 9.99m));
+        ErrorOr<Unit> result = await handler.Handle(new CreateProductCommand(sku, "Original Name", "Original description.", 9.99m), CancellationToken.None);
         Assert.False(result.IsError);
 
         return sku;
@@ -34,13 +33,14 @@ public sealed class ChangeProductCommandTests
     public async Task Handle_WithExistingProduct_PersistsChanges()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateProductCommandHandler createHandler = scope.ServiceProvider.GetRequiredService<CreateProductCommandHandler>();
+        ChangeProductCommandHandler handler = scope.ServiceProvider.GetRequiredService<ChangeProductCommandHandler>();
         CatalogDbContext dbContext = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
 
-        string sku = await SeedProductAsync(sender);
+        string sku = await SeedProductAsync(createHandler);
 
         ChangeProductCommand command = new(sku, "Updated Name", "Updated description.", 29.99m);
-        ErrorOr<Unit> result = await sender.Send(command);
+        ErrorOr<Unit> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.False(result.IsError);
 
@@ -57,11 +57,11 @@ public sealed class ChangeProductCommandTests
     public async Task Handle_WithUnknownSku_ReturnsNotFound()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        ChangeProductCommandHandler handler = scope.ServiceProvider.GetRequiredService<ChangeProductCommandHandler>();
 
         ChangeProductCommand command = new(NewSku(), "Name", "Description", 9.99m);
 
-        ErrorOr<Unit> result = await sender.Send(command);
+        ErrorOr<Unit> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.NotFound, result.FirstError.Type);
@@ -72,13 +72,14 @@ public sealed class ChangeProductCommandTests
     public async Task Handle_WithInvalidData_ReturnsValidationErrorAndDoesNotChangeProduct()
     {
         await using AsyncServiceScope scope = _fixture.Services.CreateAsyncScope();
-        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        CreateProductCommandHandler createHandler = scope.ServiceProvider.GetRequiredService<CreateProductCommandHandler>();
+        ChangeProductCommandHandler handler = scope.ServiceProvider.GetRequiredService<ChangeProductCommandHandler>();
         CatalogDbContext dbContext = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
 
-        string sku = await SeedProductAsync(sender);
+        string sku = await SeedProductAsync(createHandler);
 
         ChangeProductCommand command = new(sku, "Updated Name", "Updated description.", -5m);
-        ErrorOr<Unit> result = await sender.Send(command);
+        ErrorOr<Unit> result = await handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.Validation, result.FirstError.Type);
