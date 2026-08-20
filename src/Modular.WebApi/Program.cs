@@ -1,4 +1,4 @@
-using Carter;
+﻿using Carter;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Modular.Authorization;
@@ -42,6 +42,14 @@ builder.Services.AddExceptionHandler<CustomExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddSingleton(TimeProvider.System);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("spa", policy => policy
+        .WithOrigins("http://localhost:4200")
+        .AllowAnyHeader()
+        .AllowAnyMethod());
+});
+
 builder.Services.AddAuthentication()
     .AddKeycloakJwtBearer("keycloak", realm: "eshop-realm", options =>
 {
@@ -77,6 +85,8 @@ using (IServiceScope scope = app.Services.CreateScope())
 }
 
 app.MapDefaultEndpoints();
+
+app.UseCors("spa");
 
 app.UseAuthentication();
 

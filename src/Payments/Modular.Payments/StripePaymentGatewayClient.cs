@@ -23,7 +23,7 @@ internal sealed class StripePaymentGatewayClient : IPaymentGatewayClient
         _logger = logger;
     }
 
-    public async Task<PaymentChargeResult> ChargeAsync(Guid orderId, Price amount, CancellationToken cancellationToken)
+    public async Task<PaymentChargeResult> ChargeAsync(Guid orderId, Modular.Common.Price amount, CancellationToken cancellationToken)
     {
         string paymentMethod = amount.Value >= DeclineThreshold ? DecliningTestPaymentMethod : SucceedingTestPaymentMethod;
 
