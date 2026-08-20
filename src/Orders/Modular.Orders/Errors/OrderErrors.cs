@@ -26,6 +26,9 @@ internal static class OrderErrors
     internal static ErrorOr<Unit> AddItemToOrderError(Guid orderId, int productId) =>
         Error.Failure("Order.AddItemError", $"Product with ID '{productId}' is not placed in order '{orderId}'.");
 
+    internal static ErrorOr<Unit> ProductNotPlacedForRemoval(Guid orderId, int productId) =>
+         Error.Validation("Order.ProductNotPlacedForRemoval", $"Product with ID '{productId}' is not placed in order '{orderId}' and cannot be removed.");
+
     internal static ErrorOr<Unit> ProductQuantityIsNotEnough(int productId) =>
          Error.Validation("Order.NotEnoughProductQuantity", $"Not enough product quantity with ID '{productId}'.");
 

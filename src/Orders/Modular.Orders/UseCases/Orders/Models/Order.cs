@@ -125,18 +125,20 @@ public sealed class Order : AggregateRoot
         return Unit.Value;
     }
 
-    internal void RemoveItem(int productId)
+    internal ErrorOr<Unit> RemoveItem(int productId)
     {
         OrderItem? existingOrderItem = Items.FirstOrDefault(i => i.ProductId == productId);
 
         if (existingOrderItem is null)
         {
-            throw new InvalidOperationException("Item not found.");
+            return OrderErrors.ProductNotPlacedForRemoval(Id, productId);
         }
 
         Items.Remove(existingOrderItem);
 
         RaiseEvent(new OrderItemRemovedEvent(productId, existingOrderItem.Quantity));
+
+        return Unit.Value;
     }
 
     internal ErrorOr<Unit> Cancel()

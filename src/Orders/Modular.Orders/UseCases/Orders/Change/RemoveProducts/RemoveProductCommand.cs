@@ -33,7 +33,12 @@ internal sealed class RemoveProductCommandHandler
             return OrderErrors.OrderNotFound(request.OrderId);
         }
 
-        order.RemoveItem(request.ProductId);
+        ErrorOr<Unit> removeResult = order.RemoveItem(request.ProductId);
+
+        if (removeResult.IsError)
+        {
+            return removeResult.FirstError;
+        }
 
         _orderDbContext.Update(order);
         await _orderDbContext.SaveChangesAsync(cancellationToken);
