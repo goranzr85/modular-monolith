@@ -25,6 +25,15 @@ export const appConfig: ApplicationConfig = {
         onLoad: 'check-sso',
         pkceMethod: 'S256',
         silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
+        // Keycloak's ongoing session-iframe monitor depends on third-party
+        // cookies to read its session cookie from inside an iframe on a
+        // different origin — modern Chrome blocks that by default, which is
+        // exactly what surfaces as "Timeout when waiting for 3rd party
+        // check iframe message." Token freshness is already handled by
+        // includeBearerTokenInterceptor's proactive refresh before each API
+        // call, so this check isn't needed and shouldn't depend on
+        // third-party cookies working.
+        checkLoginIframe: false,
       },
     }),
 

@@ -46,9 +46,13 @@ provideKeycloakAngular({
   initOptions: {
     onLoad: 'check-sso', // or 'login-required' to force login app-wide
     pkceMethod: 'S256',
+    silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
+    checkLoginIframe: false, // see note below
   },
 })
 ```
+
+⚠️ **`checkLoginIframe: false` is required, not optional, in a modern browser.** `keycloak-js`'s ongoing session monitor reads Keycloak's session cookie from inside a hidden iframe on Keycloak's own origin — a third-party-cookie access pattern. Chrome (and Safari/Firefox before it) increasingly blocks that by default, and the observed symptom isn't a clean failure — it's `init()` hanging until `Error: Timeout when waiting for 3rd party check iframe message`, which blocks the entire app from rendering (see §0). Token freshness doesn't depend on this check anyway — `includeBearerTokenInterceptor` already refreshes proactively before each API call — so disabling it costs nothing.
 
 Flow: user hits the app → `keycloak-js` redirects to `http://localhost:8080/realms/eshop-realm/protocol/openid-connect/auth?...` → user authenticates on Keycloak's page → Keycloak redirects back with an authorization code → `keycloak-js` exchanges it for tokens against `http://localhost:8080/realms/eshop-realm/protocol/openid-connect/token`. The app never sees the user's password.
 
