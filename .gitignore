@@ -330,4 +330,4 @@ test_results/
 
 /to_support_list.txt
 
-*.angular
+/.angular/
