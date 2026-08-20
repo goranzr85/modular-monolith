@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Modular Commerce — Operator Console</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('theme');
+        if (stored === 'dark' || stored === 'light') {
+          document.documentElement.classList.add(stored);
+        }
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <app-root>
+    <!--
+      Static fallback shown until Angular bootstraps — Keycloak's own
+      check-sso handshake runs before the app renders anything, and can
+      take a moment even when Keycloak responds quickly. Angular replaces
+      this content automatically on mount; no JS wiring needed.
+    -->
+    <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:var(--app-bg,#f7f8fa);">
+      <div style="width:2rem;height:2rem;border:3px solid var(--app-border,#dde2e8);border-top-color:var(--app-accent,#0e7c74);border-radius:50%;animation:app-boot-spin 0.8s linear infinite;"></div>
+    </div>
+    <style>@keyframes app-boot-spin { to { transform: rotate(360deg); } }</style>
+  </app-root>
+</body>
+</html>
