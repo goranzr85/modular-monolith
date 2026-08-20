@@ -68,7 +68,9 @@ builder.Services.AddSingleton<IIntegrationEventPublisher, RabbitMqIntegrationEve
 builder.Services.AddOrderConsumers();
 builder.Services.AddWarehouseConsumers(builder.Configuration);
 builder.Services.AddNotificationConsumers();
-builder.Services.AddPaymentsConsumers();
+builder.Services
+    .RegisterPaymentsModule(builder.Configuration)
+    .AddPaymentsConsumers();
 
 builder.Services.AddTransient<IClaimsTransformation, KeycloakRolesClaimsTransformation>();
 

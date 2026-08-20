@@ -131,7 +131,7 @@ public sealed class Order : AggregateRoot
 
         if (existingOrderItem is null)
         {
-            return OrderErrors.ProductIsNotPlaced(Id, productId);
+            return OrderErrors.ProductNotPlacedForRemoval(Id, productId);
         }
 
         Items.Remove(existingOrderItem);
