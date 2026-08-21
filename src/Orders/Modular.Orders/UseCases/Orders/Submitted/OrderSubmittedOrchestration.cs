@@ -26,7 +26,7 @@ internal sealed class OrderSubmittedOrchestration : IIntegrationEventConsumer<Or
     public async Task ConsumeAsync(OrderSubmittedEvent message, CancellationToken cancellationToken)
     {
         ProcessPayment processPayment = new(message.OrderId, message.CustomerId, message.TotalAmount);
-        await _publisher.PublishAsync(processPayment, cancellationToken);
+        await _publisher.PublishAsync(processPayment, cancellationToken: cancellationToken);
     }
 
     public async Task ConsumeAsync(PaymentProcessedIntegrationEvent message, CancellationToken cancellationToken)
@@ -44,7 +44,7 @@ internal sealed class OrderSubmittedOrchestration : IIntegrationEventConsumer<Or
 
         ShipProduct shipProduct = new(message.OrderId, order.Items.Select(oi => (oi.Product.SKU, oi.Quantity)).ToArray());
 
-        await _publisher.PublishAsync(shipProduct, cancellationToken);
+        await _publisher.PublishAsync(shipProduct, cancellationToken: cancellationToken);
     }
 
     public async Task ConsumeAsync(ProductShippedIntegrationEvent message, CancellationToken cancellationToken)
@@ -80,6 +80,6 @@ internal sealed class OrderSubmittedOrchestration : IIntegrationEventConsumer<Or
             Products = order.Items.Select(i => (i.Product.Name, i.Quantity, i.Price)).ToArray(),
         };
 
-        await _publisher.PublishAsync(orderShippedIntegrationEvent, cancellationToken);
+        await _publisher.PublishAsync(orderShippedIntegrationEvent, cancellationToken: cancellationToken);
     }
 }

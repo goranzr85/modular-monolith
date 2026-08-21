@@ -7,7 +7,7 @@ internal sealed class FakeIntegrationEventPublisher : IIntegrationEventPublisher
 {
     private readonly ConcurrentBag<object> _published = new();
 
-    public Task PublishAsync(object message, CancellationToken cancellationToken = default)
+    public Task PublishAsync(object message, string? causationTraceParent = null, CancellationToken cancellationToken = default)
     {
         _published.Add(message);
         return Task.CompletedTask;

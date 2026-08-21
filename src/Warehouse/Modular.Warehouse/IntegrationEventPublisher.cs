@@ -59,7 +59,7 @@ internal sealed class IntegrationEventPublisher : SubscriptionBase
 
             if (message is not null)
             {
-                await publisher.PublishAsync(message, cancellationToken);
+                await publisher.PublishAsync(message, cancellationToken: cancellationToken);
             }
             else
             {
