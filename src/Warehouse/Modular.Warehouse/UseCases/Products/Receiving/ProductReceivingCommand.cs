@@ -1,4 +1,5 @@
-﻿using ErrorOr;
+﻿using System.Diagnostics;
+using ErrorOr;
 using FluentValidation;
 using Marten;
 using Microsoft.Extensions.Logging;
@@ -56,6 +57,7 @@ internal sealed class ProductReceivingCommandHandler
         }
 
         ProductReceived productReceived = new(request.Sku, request.Quantity, _dateTimeProvider.GetUtcNow());
+        session.CorrelationId = Activity.Current?.Id;
         session.Events.Append(productReceived.Sku, productReceived);
 
         await session.SaveChangesAsync(cancellationToken);

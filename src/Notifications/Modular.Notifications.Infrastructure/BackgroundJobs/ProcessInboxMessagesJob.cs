@@ -28,15 +28,14 @@ public sealed class ProcessInboxMessagesJob : IJob
 
     public async Task Execute(IJobExecutionContext context)
     {
-        using Activity? activity = RabbitMqTelemetry.ActivitySource.StartActivity(
-            "Notifications inbox.process", ActivityKind.Internal);
+        using Activity? activity = RabbitMqTelemetry.StartBatchActivity("Notifications inbox.process");
 
         List<InboxMessage> outboxMessages = await _notificationDbContext.InboxMessages
              .Where(m => m.ProcessedAt == null)
              .Take(20)
              .ToListAsync();
 
-        activity?.SetTag("messaging.batch.message_count", outboxMessages.Count);
+        activity.SetBatchSize(outboxMessages.Count);
 
         foreach (InboxMessage? inboxMessage in outboxMessages)
         {
@@ -69,5 +68,7 @@ public sealed class ProcessInboxMessagesJob : IJob
         }
 
         await _notificationDbContext.SaveChangesAsync();
+
+        _logger.LogBatchProcessed(outboxMessages.Count, "inbox");
     }
 }

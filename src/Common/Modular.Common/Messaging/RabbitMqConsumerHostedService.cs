@@ -107,6 +107,7 @@ public sealed class RabbitMqConsumerHostedService<TConsumer> : BackgroundService
 
         if (typeName is null || !_handlersByTypeName.TryGetValue(typeName, out MessageHandler? handler))
         {
+            activity?.SetStatus(ActivityStatusCode.Error, $"Unrecognized message type '{typeName}'.");
             _logger.LogWarning("Queue {Queue} received an unrecognized message type {Type}; dead-lettering.",
                 _queueName, typeName);
             RabbitMqTelemetry.MessagesDeadLettered.Add(1, metricTag);
@@ -133,6 +134,7 @@ public sealed class RabbitMqConsumerHostedService<TConsumer> : BackgroundService
 
         if (message is null)
         {
+            activity?.SetStatus(ActivityStatusCode.Error, $"Deserialized a null message of type '{typeName}'.");
             _logger.LogError("Queue {Queue} deserialized a null message of type {Type}; dead-lettering.",
                 _queueName, typeName);
             RabbitMqTelemetry.MessagesDeadLettered.Add(1, metricTag);

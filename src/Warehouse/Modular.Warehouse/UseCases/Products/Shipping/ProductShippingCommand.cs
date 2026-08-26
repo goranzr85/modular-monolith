@@ -1,4 +1,5 @@
-﻿using ErrorOr;
+﻿using System.Diagnostics;
+using ErrorOr;
 using FluentValidation;
 using JasperFx;
 using JasperFx.Events;
@@ -73,6 +74,7 @@ internal sealed class ProductShippingCommandHandler
 
         DateTimeOffset occuredOnUtc = _dateTimeProvider.GetUtcNow();
         ProductShipped productShipped = new(request.Sku, request.Quantity, occuredOnUtc);
+        session.CorrelationId = Activity.Current?.Id;
         stream.AppendOne(productShipped);
 
         try

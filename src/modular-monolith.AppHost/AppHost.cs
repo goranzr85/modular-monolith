@@ -57,12 +57,19 @@ var rabbitmq = builder.AddRabbitMQ("rabbitmq", rabbitMqUsername, rabbitMqPasswor
     .WithManagementPlugin()
     .WithLifetime(ContainerLifetime.Persistent);
 
-builder.AddProject<Projects.Modular_WebApi>("modular-webapi")
+var webapi = builder.AddProject<Projects.Modular_WebApi>("modular-webapi")
     .WithReference(postgresDb)
     .WaitFor(postgresDb)
     .WithReference(rabbitmq)
     .WaitFor(rabbitmq)
     .WithReference(keycloak)
     .WaitFor(keycloak);
+
+builder.AddJavaScriptApp("eshop-client", "../../client")
+    .WithRunScript("start")
+    .WithHttpEndpoint(port: 4200, env: "PORT")
+    .WithReference(webapi)
+    .WaitFor(webapi)
+    .WithExternalHttpEndpoints();
 
 await builder.Build().RunAsync();

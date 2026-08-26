@@ -16,11 +16,23 @@ using Modular.Warehouse;
 using Modular.WebApi;
 using Modular.WebApi.MIddlewares;
 
+const string AngularClientCorsPolicy = "AngularClient";
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
 builder.Services.AddSwagger(builder.Configuration);
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(AngularClientCorsPolicy, policy =>
+    {
+        policy.WithOrigins("http://localhost:4200", "https://localhost:4200")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 builder.Services
     .RegisterCustomerModule(builder.Configuration)
@@ -76,14 +88,15 @@ using (IServiceScope scope = app.Services.CreateScope())
 
 app.MapDefaultEndpoints();
 
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors(AngularClientCorsPolicy);
+    app.UseSwagger(builder.Configuration);
+}
+
 app.UseAuthentication();
 
 app.UseAuthorization();
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger(builder.Configuration);
-}
 
 app.UseExceptionHandler();
 app.UseHttpsRedirection();

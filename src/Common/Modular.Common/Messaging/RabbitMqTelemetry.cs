@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using Microsoft.Extensions.Logging;
 
 namespace Modular.Common.Messaging;
 
@@ -25,6 +26,23 @@ public static class RabbitMqTelemetry
 
     public static readonly Histogram<double> ConsumeDuration =
         Meter.CreateHistogram<double>("messaging.rabbitmq.consume.duration", unit: "ms", description: "Time to handle a delivered message, including retries.");
+
+    // Shared by every module's outbox/inbox Quartz job: starts the batch-processing span (covering the
+    // DB query for pending messages, before the batch size is known) and reports the resulting size and
+    // outcome consistently, so the convention only needs to change in one place.
+    public static Activity? StartBatchActivity(string name) =>
+        ActivitySource.StartActivity(name, ActivityKind.Internal);
+
+    public static void SetBatchSize(this Activity? activity, int messageCount) =>
+        activity?.SetTag("messaging.batch.message_count", messageCount);
+
+    public static void LogBatchProcessed(this ILogger logger, int messageCount, string messageKind)
+    {
+        if (messageCount > 0)
+        {
+            logger.LogInformation("Processed {Count} {MessageKind} messages.", messageCount, messageKind);
+        }
+    }
 
     public static void RecordException(this Activity? activity, Exception exception)
     {

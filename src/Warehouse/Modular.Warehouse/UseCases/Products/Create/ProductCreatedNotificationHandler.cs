@@ -1,4 +1,5 @@
-﻿using Marten;
+﻿using System.Diagnostics;
+using Marten;
 using Microsoft.Extensions.Logging;
 using Modular.Catalog.IntegrationEvents;
 using Modular.Common.Events;
@@ -35,6 +36,7 @@ internal sealed class ProductCreatedNotificationHandler : IIntegrationEventConsu
         }
 
         ProductCreated productCreated = new(sku, message.Name, _dateTimeProvider.GetUtcNow());
+        session.CorrelationId = Activity.Current?.Id;
         session.Events.StartStream<Product>(sku, productCreated);
         await session.SaveChangesAsync(cancellationToken);
 
