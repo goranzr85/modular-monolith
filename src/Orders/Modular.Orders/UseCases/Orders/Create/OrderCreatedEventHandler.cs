@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Modular.Common;
 using Modular.Common.Events;
 using Modular.Orders.UseCases.Common;
 using Modular.Orders.UseCases.Orders.Models;
@@ -29,7 +30,7 @@ internal sealed class OrderCreatedEventHandler : IIntegrationEventConsumer<Order
         foreach (OrderItem orderItem in message.OrderItems)
         {
             Product product = products.Single(x => x.Id == orderItem.ProductId);
-            product.DecreaseStock(orderItem.Quantity);
+            product.DecreaseStock(orderItem.Quantity).ThrowIfError();
         }
 
         await _orderDbContext.SaveChangesAsync(cancellationToken);

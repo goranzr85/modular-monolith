@@ -23,4 +23,12 @@ public static class ErrorOrExtensions
         };
 
     }
+
+    public static void ThrowIfError<T>(this ErrorOr<T> response)
+    {
+        if (response.IsError)
+        {
+            throw new InvalidOperationException($"{response.FirstError.Code}: {response.FirstError.Description}");
+        }
+    }
 }

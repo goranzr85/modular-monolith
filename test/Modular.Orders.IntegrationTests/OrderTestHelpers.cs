@@ -25,7 +25,7 @@ internal static class OrderTestHelpers
 
     public static async Task<int> SeedProductAsync(OrderDbContext dbContext, uint stockQuantity, decimal price = 9.99m)
     {
-        Product product = Product.Create(Guid.NewGuid().ToString("N")[..10], "Test Product", "Test description.", Price.Create(price));
+        Product product = Product.Create(Guid.NewGuid().ToString("N")[..10], "Test Product", "Test description.", Price.Create(price).Value).Value;
         product.IncreaseStock(stockQuantity);
 
         dbContext.Products.Add(product);

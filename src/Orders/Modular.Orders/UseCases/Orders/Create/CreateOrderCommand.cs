@@ -32,7 +32,14 @@ internal sealed class CreateOrderCommandHandler
 
         _logger.LogInformation("Creating order {OrderId}.", request.OrderId);
 
-        order = Order.Create(request.OrderId, request.OrderDate, request.CustomerId, request.Items);
+        ErrorOr<Order> orderResult = Order.Create(request.OrderId, request.OrderDate, request.CustomerId, request.Items);
+
+        if (orderResult.IsError)
+        {
+            return orderResult.FirstError;
+        }
+
+        order = orderResult.Value;
 
         _orderDbContext.Add(order);
         await _orderDbContext.SaveChangesAsync(cancellationToken);

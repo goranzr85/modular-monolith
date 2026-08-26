@@ -217,7 +217,7 @@ public sealed class ChangeCustomerCommandTests
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.NotFound, result.FirstError.Type);
-        Assert.Equal("Customers.NotFound", result.FirstError.Code);
+        Assert.Equal("Customer.NotFound", result.FirstError.Code);
     }
 
     [Fact]

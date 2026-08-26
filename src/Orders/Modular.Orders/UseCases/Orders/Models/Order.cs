@@ -29,26 +29,26 @@ public sealed class Order : AggregateRoot
         Items = new List<OrderItem>();
     }
 
-    internal static Order Create(Guid orderId, DateTimeOffset orderDate, Guid customerId, List<OrderItem> items)
+    internal static ErrorOr<Order> Create(Guid orderId, DateTimeOffset orderDate, Guid customerId, List<OrderItem> items)
     {
         if (orderId == Guid.Empty)
         {
-            throw new ArgumentException("OrderId cannot be empty.", nameof(orderId));
+            return OrderErrors.InvalidOrderId();
         }
 
         if (orderDate == DateTimeOffset.MinValue)
         {
-            throw new ArgumentException("OrderDate cannot be empty.", nameof(orderDate));
+            return OrderErrors.InvalidOrderDate();
         }
 
         if (customerId == Guid.Empty)
         {
-            throw new ArgumentException("CustomerId cannot be empty.", nameof(customerId));
+            return OrderErrors.InvalidCustomerId();
         }
 
         if (items is null || items.Count == 0)
         {
-            throw new ArgumentException("Items cannot be null or empty.", nameof(items));
+            return OrderErrors.EmptyItems();
         }
 
         Order order = new Order
@@ -56,7 +56,7 @@ public sealed class Order : AggregateRoot
             Id = orderId,
             OrderDate = orderDate,
             CustomerId = customerId,
-            TotalAmount = Price.Create(items.Sum(x => x.Price)),
+            TotalAmount = Price.Create(items.Sum(x => x.Price)).Value,
             Items = items,
             Status = OrderStatus.Pending
         };
@@ -125,18 +125,20 @@ public sealed class Order : AggregateRoot
         return Unit.Value;
     }
 
-    internal void RemoveItem(int productId)
+    internal ErrorOr<Unit> RemoveItem(int productId)
     {
         OrderItem? existingOrderItem = Items.FirstOrDefault(i => i.ProductId == productId);
 
         if (existingOrderItem is null)
         {
-            throw new InvalidOperationException("Item not found.");
+            return OrderErrors.ProductIsNotPlaced(Id, productId);
         }
 
         Items.Remove(existingOrderItem);
 
         RaiseEvent(new OrderItemRemovedEvent(productId, existingOrderItem.Quantity));
+
+        return Unit.Value;
     }
 
     internal ErrorOr<Unit> Cancel()

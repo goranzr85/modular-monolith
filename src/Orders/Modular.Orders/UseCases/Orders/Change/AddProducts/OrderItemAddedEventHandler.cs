@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Modular.Common;
 using Modular.Common.Events;
 using Modular.Orders.UseCases.Common;
 
@@ -23,7 +24,7 @@ internal sealed class OrderItemAddedEventHandler : IIntegrationEventConsumer<Ord
             .FromSqlInterpolated($"SELECT * FROM Products WHERE Id = {productId} FOR UPDATE")
             .FirstAsync(cancellationToken);
 
-        product.DecreaseStock(message.Quantity);
+        product.DecreaseStock(message.Quantity).ThrowIfError();
 
         await _orderDbContext.SaveChangesAsync(cancellationToken);
 

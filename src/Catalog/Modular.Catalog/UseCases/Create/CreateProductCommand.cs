@@ -33,7 +33,14 @@ internal sealed class CreateProductCommandHandler
                 return ProductErrors.ProductAlreadyExists(request.Sku);
             }
 
-            ErrorOr<Product> productResult = Product.Create(request.Sku, request.Name, request.Description, Price.Create(request.Price));
+            ErrorOr<Price> priceResult = Price.Create(request.Price);
+
+            if (priceResult.IsError)
+            {
+                return priceResult.FirstError;
+            }
+
+            ErrorOr<Product> productResult = Product.Create(request.Sku, request.Name, request.Description, priceResult.Value);
 
             if (productResult.IsError)
             {

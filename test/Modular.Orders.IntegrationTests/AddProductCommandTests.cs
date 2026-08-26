@@ -25,7 +25,7 @@ public sealed class AddProductCommandTests
 
         ErrorOr<Guid> result = await OrderTestHelpers.RunAsync(_fixture, async sp =>
         {
-            List<OrderItem> items = [new OrderItem { ProductId = seedProductId, Quantity = 1, Price = Price.Create(9.99m) }];
+            List<OrderItem> items = [new OrderItem { ProductId = seedProductId, Quantity = 1, Price = Price.Create(9.99m).Value }];
             return await sp.GetRequiredService<CreateOrderCommandHandler>().Handle(new CreateOrderCommand(orderId, DateTimeOffset.UtcNow, Guid.NewGuid(), items), CancellationToken.None);
         });
         Assert.False(result.IsError);
@@ -45,7 +45,7 @@ public sealed class AddProductCommandTests
         int newProductId = await SeedProductAsync(stockQuantity: 50);
 
         ErrorOr<Unit> result = await OrderTestHelpers.RunAsync(_fixture, async sp =>
-            await sp.GetRequiredService<AddProductCommandHandler>().Handle(new AddProductCommand(orderId, newProductId, 5, Price.Create(14.5m)), CancellationToken.None));
+            await sp.GetRequiredService<AddProductCommandHandler>().Handle(new AddProductCommand(orderId, newProductId, 5, Price.Create(14.5m).Value), CancellationToken.None));
 
         Assert.False(result.IsError);
 
@@ -68,7 +68,7 @@ public sealed class AddProductCommandTests
         int lowStockProductId = await SeedProductAsync(stockQuantity: 2);
 
         ErrorOr<Unit> result = await OrderTestHelpers.RunAsync(_fixture, async sp =>
-            await sp.GetRequiredService<AddProductCommandHandler>().Handle(new AddProductCommand(orderId, lowStockProductId, 5, Price.Create(14.5m)), CancellationToken.None));
+            await sp.GetRequiredService<AddProductCommandHandler>().Handle(new AddProductCommand(orderId, lowStockProductId, 5, Price.Create(14.5m).Value), CancellationToken.None));
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.Validation, result.FirstError.Type);
@@ -88,7 +88,7 @@ public sealed class AddProductCommandTests
         Guid orderId = await SeedOrderAsync(seedProductId);
 
         ErrorOr<Unit> result = await OrderTestHelpers.RunAsync(_fixture, async sp =>
-            await sp.GetRequiredService<AddProductCommandHandler>().Handle(new AddProductCommand(orderId, int.MaxValue, 1, Price.Create(9.99m)), CancellationToken.None));
+            await sp.GetRequiredService<AddProductCommandHandler>().Handle(new AddProductCommand(orderId, int.MaxValue, 1, Price.Create(9.99m).Value), CancellationToken.None));
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.NotFound, result.FirstError.Type);
@@ -101,7 +101,7 @@ public sealed class AddProductCommandTests
         int productId = await SeedProductAsync(stockQuantity: 100);
 
         ErrorOr<Unit> result = await OrderTestHelpers.RunAsync(_fixture, async sp =>
-            await sp.GetRequiredService<AddProductCommandHandler>().Handle(new AddProductCommand(Guid.NewGuid(), productId, 1, Price.Create(9.99m)), CancellationToken.None));
+            await sp.GetRequiredService<AddProductCommandHandler>().Handle(new AddProductCommand(Guid.NewGuid(), productId, 1, Price.Create(9.99m).Value), CancellationToken.None));
 
         Assert.True(result.IsError);
         Assert.Equal(ErrorType.NotFound, result.FirstError.Type);
@@ -121,11 +121,11 @@ public sealed class AddProductCommandTests
         Guid orderId = await SeedOrderAsync(seedProductId);
 
         ErrorOr<Unit> firstAdd = await OrderTestHelpers.RunAsync(_fixture, async sp =>
-            await sp.GetRequiredService<AddProductCommandHandler>().Handle(new AddProductCommand(orderId, seedProductId, 10, Price.Create(9.99m)), CancellationToken.None));
+            await sp.GetRequiredService<AddProductCommandHandler>().Handle(new AddProductCommand(orderId, seedProductId, 10, Price.Create(9.99m).Value), CancellationToken.None));
         Assert.False(firstAdd.IsError);
 
         ErrorOr<Unit> secondAdd = await OrderTestHelpers.RunAsync(_fixture, async sp =>
-            await sp.GetRequiredService<AddProductCommandHandler>().Handle(new AddProductCommand(orderId, seedProductId, 3, Price.Create(9.99m)), CancellationToken.None));
+            await sp.GetRequiredService<AddProductCommandHandler>().Handle(new AddProductCommand(orderId, seedProductId, 3, Price.Create(9.99m).Value), CancellationToken.None));
         Assert.False(secondAdd.IsError);
 
         Order? order = await OrderTestHelpers.RunAsync(_fixture, async sp =>

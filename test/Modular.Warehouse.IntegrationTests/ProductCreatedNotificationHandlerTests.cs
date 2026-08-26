@@ -26,7 +26,7 @@ public sealed class ProductCreatedNotificationHandlerTests
         IDocumentStore store = app.Services.GetRequiredService<IDocumentStore>();
 
         string sku = NewSku();
-        ProductCreatedIntegrationEvent createdEvent = new(sku, "Test Product", "A product used for testing.", Price.Create(9.99m));
+        ProductCreatedIntegrationEvent createdEvent = new(sku, "Test Product", "A product used for testing.", Price.Create(9.99m).Value);
 
         await app.Publisher.PublishAsync(createdEvent);
 
@@ -46,7 +46,7 @@ public sealed class ProductCreatedNotificationHandlerTests
         IDocumentStore store = app.Services.GetRequiredService<IDocumentStore>();
 
         string sku = NewSku();
-        ProductCreatedIntegrationEvent createdEvent = new(sku, "Test Product", "A product used for testing.", Price.Create(9.99m));
+        ProductCreatedIntegrationEvent createdEvent = new(sku, "Test Product", "A product used for testing.", Price.Create(9.99m).Value);
 
         await app.Publisher.PublishAsync(createdEvent);
 

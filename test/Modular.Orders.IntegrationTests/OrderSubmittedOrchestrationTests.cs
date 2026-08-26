@@ -34,7 +34,7 @@ public sealed class OrderSubmittedOrchestrationTests
 
         ErrorOr<Guid> result = await OrderTestHelpers.RunAsync(_fixture, async sp =>
         {
-            List<OrderItem> items = [new OrderItem { ProductId = productId, Quantity = quantity, Price = Price.Create(9.99m) }];
+            List<OrderItem> items = [new OrderItem { ProductId = productId, Quantity = quantity, Price = Price.Create(9.99m).Value }];
             return await sp.GetRequiredService<CreateOrderCommandHandler>()
                 .Handle(new CreateOrderCommand(orderId, DateTimeOffset.UtcNow, Guid.NewGuid(), items), CancellationToken.None);
         });
@@ -48,7 +48,7 @@ public sealed class OrderSubmittedOrchestrationTests
     {
         Guid orderId = Guid.NewGuid();
         Guid customerId = Guid.NewGuid();
-        OrderSubmittedEvent submittedEvent = new(orderId, customerId, Price.Create(19.99m));
+        OrderSubmittedEvent submittedEvent = new(orderId, customerId, Price.Create(19.99m).Value);
 
         await OrderTestHelpers.RunAsync(_fixture, async sp =>
             await sp.GetRequiredService<OrderSubmittedOrchestration>().ConsumeAsync(submittedEvent, CancellationToken.None));
@@ -130,7 +130,7 @@ public sealed class OrderSubmittedOrchestrationTests
         Guid customerId = await OrderTestHelpers.RunAsync(_fixture, async sp =>
             (await sp.GetRequiredService<OrderDbContext>().Orders.AsNoTracking().SingleAsync(o => o.Id == orderId)).CustomerId);
 
-        OrderShippedEvent orderShippedEvent = new(orderId, customerId, Price.Create(9.99m));
+        OrderShippedEvent orderShippedEvent = new(orderId, customerId, Price.Create(9.99m).Value);
 
         await OrderTestHelpers.RunAsync(_fixture, async sp =>
             await sp.GetRequiredService<OrderSubmittedOrchestration>().ConsumeAsync(orderShippedEvent, CancellationToken.None));

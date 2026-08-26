@@ -49,7 +49,14 @@ internal sealed class ChangeProductCommandHandler
             return ProductErrors.ProductNotFound(request.Sku);
         }
 
-        product.Change(request.Sku, request.Name, request.Description, Price.Create(request.Price));
+        ErrorOr<Price> priceResult = Price.Create(request.Price);
+
+        if (priceResult.IsError)
+        {
+            return priceResult.FirstError;
+        }
+
+        product.Change(request.Sku, request.Name, request.Description, priceResult.Value);
 
         _catalogDbContext.Update(product);
         await _catalogDbContext.SaveChangesAsync(cancellationToken);

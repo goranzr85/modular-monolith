@@ -38,7 +38,7 @@ public sealed class CatalogDbContext : DbContext
 
             var priceConverter = new ValueConverter<Price, decimal>(
                 price => (decimal)price,
-                value => Price.Create(value));
+                value => Price.FromPersistedValue(value));
 
             builder.Property(c => c.Price)
                 .HasConversion(priceConverter)
