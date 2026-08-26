@@ -17,6 +17,6 @@ public class ProcessPaymentHandler : IIntegrationEventConsumer<ProcessPayment>
     {
         // process payment logic here
 
-        await _publisher.PublishAsync(new PaymentProcessedIntegrationEvent(message.OrderId), cancellationToken);
+        await _publisher.PublishAsync(new PaymentProcessedIntegrationEvent(message.OrderId), cancellationToken: cancellationToken);
     }
 }

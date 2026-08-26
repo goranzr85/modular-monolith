@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Diagnostics;
+﻿using System.Diagnostics;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Modular.WebApi.MIddlewares;
@@ -17,6 +18,9 @@ public sealed class CustomExceptionHandler : IExceptionHandler
         CancellationToken cancellationToken)
     {
         _logger.LogError(exception, "Exception occured: {Message}", exception.Message);
+
+        // Swallowing the exception here hides it from ASP.NET Core's own instrumentation, so mark the trace manually.
+        Activity.Current?.SetStatus(ActivityStatusCode.Error, exception.Message);
 
         var problemDetails = new ProblemDetails
         {

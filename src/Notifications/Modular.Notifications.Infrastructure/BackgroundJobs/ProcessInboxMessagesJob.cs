@@ -1,6 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Modular.Common.Messaging;
 using Modular.Notifications.Infrastructure.NotificationSenders;
 using Modular.Orders.Integrations;
 using Newtonsoft.Json;
@@ -26,10 +28,14 @@ public sealed class ProcessInboxMessagesJob : IJob
 
     public async Task Execute(IJobExecutionContext context)
     {
+        using Activity? activity = RabbitMqTelemetry.StartBatchActivity("Notifications inbox.process");
+
         List<InboxMessage> outboxMessages = await _notificationDbContext.InboxMessages
              .Where(m => m.ProcessedAt == null)
              .Take(20)
              .ToListAsync();
+
+        activity.SetBatchSize(outboxMessages.Count);
 
         foreach (InboxMessage? inboxMessage in outboxMessages)
         {
@@ -62,5 +68,7 @@ public sealed class ProcessInboxMessagesJob : IJob
         }
 
         await _notificationDbContext.SaveChangesAsync();
+
+        _logger.LogBatchProcessed(outboxMessages.Count, "inbox");
     }
 }

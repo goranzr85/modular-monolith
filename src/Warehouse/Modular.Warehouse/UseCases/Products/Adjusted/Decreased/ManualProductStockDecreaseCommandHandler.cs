@@ -1,4 +1,5 @@
-﻿using ErrorOr;
+﻿using System.Diagnostics;
+using ErrorOr;
 using FluentValidation;
 using JasperFx;
 using JasperFx.Events;
@@ -69,6 +70,7 @@ internal sealed class ManualProductStockDecreaseCommandHandler
         }
 
         DecreasedProductQuantity productDecreased = new(request.Sku, request.Quantity, request.Reason, _dateTimeProvider.GetUtcNow());
+        session.CorrelationId = Activity.Current?.Id;
         stream.AppendOne(productDecreased);
 
         try

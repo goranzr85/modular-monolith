@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -93,10 +95,22 @@ public sealed class RabbitMqConsumerHostedService<TConsumer> : BackgroundService
     {
         string? typeName = ea.BasicProperties.Type;
 
+        ActivityContext parentContext = ExtractParentContext(ea.BasicProperties);
+        using Activity? activity = RabbitMqTelemetry.ActivitySource.StartActivity(
+            $"{_queueName} process", ActivityKind.Consumer, parentContext);
+        activity?.SetTag("messaging.system", "rabbitmq");
+        activity?.SetTag("messaging.destination", _queueName);
+        activity?.SetTag("messaging.message.type", typeName);
+
+        long startTimestamp = Stopwatch.GetTimestamp();
+        var metricTag = new KeyValuePair<string, object?>("messaging.destination", _queueName);
+
         if (typeName is null || !_handlersByTypeName.TryGetValue(typeName, out MessageHandler? handler))
         {
+            activity?.SetStatus(ActivityStatusCode.Error, $"Unrecognized message type '{typeName}'.");
             _logger.LogWarning("Queue {Queue} received an unrecognized message type {Type}; dead-lettering.",
                 _queueName, typeName);
+            RabbitMqTelemetry.MessagesDeadLettered.Add(1, metricTag);
             await _channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false,
                 cancellationToken: stoppingToken);
             return;
@@ -109,8 +123,10 @@ public sealed class RabbitMqConsumerHostedService<TConsumer> : BackgroundService
         }
         catch (JsonException ex)
         {
+            activity.RecordException(ex);
             _logger.LogError(ex, "Queue {Queue} failed to deserialize message of type {Type}; dead-lettering.",
                 _queueName, typeName);
+            RabbitMqTelemetry.MessagesDeadLettered.Add(1, metricTag);
             await _channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false,
                 cancellationToken: stoppingToken);
             return;
@@ -118,8 +134,10 @@ public sealed class RabbitMqConsumerHostedService<TConsumer> : BackgroundService
 
         if (message is null)
         {
+            activity?.SetStatus(ActivityStatusCode.Error, $"Deserialized a null message of type '{typeName}'.");
             _logger.LogError("Queue {Queue} deserialized a null message of type {Type}; dead-lettering.",
                 _queueName, typeName);
+            RabbitMqTelemetry.MessagesDeadLettered.Add(1, metricTag);
             await _channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false,
                 cancellationToken: stoppingToken);
             return;
@@ -134,6 +152,9 @@ public sealed class RabbitMqConsumerHostedService<TConsumer> : BackgroundService
                 await handler.Invoke(consumer, message, stoppingToken);
 
                 await _channel!.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken: stoppingToken);
+                RabbitMqTelemetry.MessagesConsumed.Add(1, metricTag);
+                RabbitMqTelemetry.ConsumeDuration.Record(
+                    Stopwatch.GetElapsedTime(startTimestamp).TotalMilliseconds, metricTag);
                 return;
             }
             catch (Exception ex) when (attempt < MaxDeliveryAttempts)
@@ -144,13 +165,47 @@ public sealed class RabbitMqConsumerHostedService<TConsumer> : BackgroundService
             }
             catch (Exception ex)
             {
+                activity.RecordException(ex);
                 _logger.LogError(ex,
                     "Queue {Queue} giving up on message type {Type} after {MaxAttempts} attempts; dead-lettering.",
                     _queueName, typeName, MaxDeliveryAttempts);
+                RabbitMqTelemetry.MessagesDeadLettered.Add(1, metricTag);
+                RabbitMqTelemetry.ConsumeDuration.Record(
+                    Stopwatch.GetElapsedTime(startTimestamp).TotalMilliseconds, metricTag);
                 await _channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false,
                     cancellationToken: stoppingToken);
                 return;
             }
+        }
+    }
+
+    private static ActivityContext ExtractParentContext(IReadOnlyBasicProperties properties)
+    {
+        DistributedContextPropagator.Current.ExtractTraceIdAndState(properties, HeaderGetter,
+            out string? traceParent, out string? traceState);
+
+        if (traceParent is not null && ActivityContext.TryParse(traceParent, traceState, isRemote: true, out ActivityContext context))
+        {
+            return context;
+        }
+
+        return default;
+    }
+
+    private static void HeaderGetter(object? carrier, string fieldName, out string? fieldValue, out IEnumerable<string>? fieldValues)
+    {
+        fieldValues = null;
+        fieldValue = null;
+
+        if (carrier is IReadOnlyBasicProperties { Headers: not null } properties
+            && properties.Headers.TryGetValue(fieldName, out object? raw))
+        {
+            fieldValue = raw switch
+            {
+                byte[] bytes => Encoding.UTF8.GetString(bytes),
+                string str => str,
+                _ => null
+            };
         }
     }
 

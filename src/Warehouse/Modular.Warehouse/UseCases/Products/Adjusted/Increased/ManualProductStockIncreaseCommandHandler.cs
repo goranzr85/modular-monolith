@@ -1,4 +1,5 @@
-﻿using ErrorOr;
+﻿using System.Diagnostics;
+using ErrorOr;
 using FluentValidation;
 using Marten;
 using Microsoft.Extensions.Logging;
@@ -57,6 +58,7 @@ internal sealed class ManualProductStockIncreaseCommandHandler
         }
 
         IncreasedProductQuantity productIncreased = new(request.Sku, request.Quantity, request.Reason, _dateTimeProvider.GetUtcNow());
+        session.CorrelationId = Activity.Current?.Id;
         session.Events.Append(productIncreased.Sku, productIncreased);
 
         await session.SaveChangesAsync(cancellationToken);

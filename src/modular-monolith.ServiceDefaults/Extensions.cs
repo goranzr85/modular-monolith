@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ServiceDiscovery;
+using Npgsql;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
@@ -57,7 +58,14 @@ public static class Extensions
             {
                 metrics.AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
-                    .AddRuntimeInstrumentation();
+                    .AddRuntimeInstrumentation()
+                    .AddNpgsqlInstrumentation()
+                    // Emitted by modules that use Marten for event sourcing (Warehouse); a no-op meter name
+                    // for modules that don't reference Marten.
+                    .AddMeter("Marten")
+                    // Emitted by Modular.Common.Messaging (RabbitMqTelemetry): publish/consume counters and
+                    // consume-duration histogram for the hand-rolled outbox/RabbitMQ pipeline.
+                    .AddMeter("Modular.Common.Messaging");
             })
             .WithTracing(tracing =>
             {
@@ -70,7 +78,12 @@ public static class Extensions
                     )
                     // Uncomment the following line to enable gRPC instrumentation (requires the OpenTelemetry.Instrumentation.GrpcNetClient package)
                     //.AddGrpcClientInstrumentation()
-                    .AddHttpClientInstrumentation();
+                    .AddHttpClientInstrumentation()
+                    // DB command spans for every module's DbContext (Npgsql manages its own internal
+                    // NpgsqlDataSource under EF Core's UseNpgsql(...), so this needs no per-module changes).
+                    .AddNpgsql()
+                    .AddSource("Marten")
+                    .AddSource("Modular.Common.Messaging");
             });
 
         builder.AddOpenTelemetryExporters();

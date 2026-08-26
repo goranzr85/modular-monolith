@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Modular.Common.Events;
 using Newtonsoft.Json;
@@ -38,7 +39,8 @@ public sealed class EventsToOutboxMessagesInterceptors : SaveChangesInterceptor
                 new JsonSerializerSettings
                 {
                     TypeNameHandling = TypeNameHandling.All
-                })
+                }),
+                TraceParent = Activity.Current?.Id
             })
             .ToList();
 

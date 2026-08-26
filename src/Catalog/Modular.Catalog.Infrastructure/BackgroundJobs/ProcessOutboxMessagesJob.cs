@@ -1,7 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Modular.Common;
 using Modular.Common.Events;
+using Modular.Common.Messaging;
 using Newtonsoft.Json;
 using Polly.Registry;
 using Quartz;
@@ -27,10 +29,14 @@ public sealed class ProcessOutboxMessagesJob : IJob
 
     public async Task Execute(IJobExecutionContext context)
     {
+        using Activity? activity = RabbitMqTelemetry.StartBatchActivity("Catalog outbox.process");
+
         var outboxMessages = await _catalogDbContext.OutboxMessages
              .Where(m => m.ProcessedOnUtc == null)
              .Take(20)
              .ToListAsync();
+
+        activity.SetBatchSize(outboxMessages.Count);
 
         foreach (OutboxMessage? outboxMessage in outboxMessages)
         {
@@ -51,12 +57,14 @@ public sealed class ProcessOutboxMessagesJob : IJob
 
             await pipeline.ExecuteAsync(async ct =>
             {
-                await _publisher.PublishAsync(integrationEvent, ct);
+                await _publisher.PublishAsync(integrationEvent, outboxMessage.TraceParent, ct);
             });
 
             outboxMessage!.ProcessedOnUtc = DateTime.UtcNow;
         }
 
         await _catalogDbContext.SaveChangesAsync();
+
+        _logger.LogBatchProcessed(outboxMessages.Count, "outbox");
     }
 }

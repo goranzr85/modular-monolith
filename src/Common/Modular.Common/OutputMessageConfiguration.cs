@@ -22,6 +22,9 @@ public class OutputMessageConfiguration : IEntityTypeConfiguration<OutboxMessage
         builder.Property(c => c.Error)
             .HasMaxLength(3000);
 
+        builder.Property(c => c.TraceParent)
+            .HasMaxLength(64);
+
         builder.ToTable("OutboxMessages");
     }
 }
