@@ -1,6 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Stripe.net" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\Common\Modular.Common\Modular.Common.csproj" />
     <ProjectReference Include="..\..\Orders\Modular.Orders.IntegrationEvents\Modular.Orders.Integrations.csproj" />
     <ProjectReference Include="..\Modular.Payments.IntegrationEvents\Modular.Payments.IntegrationEvents.csproj" />
