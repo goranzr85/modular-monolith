@@ -10,13 +10,13 @@ namespace Modular.Notifications.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-
+            // No schema changes - this migration only syncs the EF Core model snapshot.
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-
+            // No schema changes - this migration only syncs the EF Core model snapshot.
         }
     }
 }

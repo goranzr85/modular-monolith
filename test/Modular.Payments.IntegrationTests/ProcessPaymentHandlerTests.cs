@@ -13,8 +13,7 @@ namespace Modular.Payments.IntegrationTests;
 
 public sealed class ProcessPaymentHandlerTests : IAsyncLifetime
 {
-    private readonly RabbitMqContainer _rabbitContainer = new RabbitMqBuilder()
-        .WithImage("rabbitmq:4-management-alpine")
+    private readonly RabbitMqContainer _rabbitContainer = new RabbitMqBuilder("rabbitmq:4-management-alpine")
         .Build();
 
     private ServiceProvider _provider = null!;

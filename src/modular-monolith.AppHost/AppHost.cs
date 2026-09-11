@@ -4,7 +4,7 @@
 static string ToWslPath(string path)
 {
     var fullPath = Path.GetFullPath(path);
-    if (fullPath.StartsWith("/mnt/") || fullPath.StartsWith("/"))
+    if (fullPath.StartsWith("/mnt/") || fullPath.StartsWith('/'))
     {
         return fullPath;
     }

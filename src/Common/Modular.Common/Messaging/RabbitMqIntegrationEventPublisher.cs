@@ -68,7 +68,6 @@ public sealed class RabbitMqIntegrationEventPublisher : IIntegrationEventPublish
         catch (Exception ex)
         {
             activity.RecordException(ex);
-            _logger.LogError(ex, "Failed to publish {MessageType} to exchange {Exchange}.", messageType.FullName, exchange);
             throw;
         }
     }

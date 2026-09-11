@@ -34,16 +34,16 @@ internal sealed class ChangeCustomerCommandValidator : AbstractValidator<CreateC
 
         RuleFor(o => o.ShippingAddress).ChildRules(address =>
         {
-            address.RuleFor(a => a.Street)
+            address.RuleFor(a => a!.Street)
                 .MaximumLength(AddressConfiguration.StreetMaxLength);
 
-            address.RuleFor(a => a.City)
+            address.RuleFor(a => a!.City)
                 .MaximumLength(AddressConfiguration.CityMaxLength);
 
-            address.RuleFor(a => a.Zip)
+            address.RuleFor(a => a!.Zip)
                 .MaximumLength(AddressConfiguration.ZipMaxLength);
 
-            address.RuleFor(a => a.State)
+            address.RuleFor(a => a!.State)
                 .MaximumLength(AddressConfiguration.StateMaxLength);
         })
             .When(o => o.ShippingAddress is not null);

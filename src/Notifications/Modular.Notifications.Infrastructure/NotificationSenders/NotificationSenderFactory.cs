@@ -33,8 +33,8 @@ internal sealed class NotificationSenderFactory : INotificationSender
         }
 
         Common.User.PrimaryContactType primaryContactType = await _notificationDbContext.Customers
-               .Where(c => c.Id == orderShippedEvent!.CustomerId)
-               .Select(c => c!.Contact.PrimaryContactType)
+               .Where(c => c.Id == orderShippedEvent.CustomerId)
+               .Select(c => c.Contact.PrimaryContactType)
                .FirstOrDefaultAsync();
 
         ErrorOr<Unit> result = primaryContactType switch

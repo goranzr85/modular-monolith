@@ -76,6 +76,8 @@ public sealed class ProcessInboxMessagesJobTests
 
         ProcessInboxMessagesJob job = ActivatorUtilities.CreateInstance<ProcessInboxMessagesJob>(scope.ServiceProvider);
 
-        await job.Execute(null!);
+        Exception? exception = await Record.ExceptionAsync(() => job.Execute(null!));
+
+        Assert.Null(exception);
     }
 }

@@ -39,13 +39,11 @@ public sealed class WarehouseTestApp : IAsyncDisposable
 // why: sharing one long-lived app across many tests proved flaky).
 public sealed class WarehouseDatabaseFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder()
-        .WithImage("postgres:16-alpine")
+    private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder("postgres:16-alpine")
         .WithDatabase("eshop")
         .Build();
 
-    private readonly RabbitMqContainer _rabbitContainer = new RabbitMqBuilder()
-        .WithImage("rabbitmq:4-management-alpine")
+    private readonly RabbitMqContainer _rabbitContainer = new RabbitMqBuilder("rabbitmq:4-management-alpine")
         .Build();
 
     public async Task InitializeAsync()

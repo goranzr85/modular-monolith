@@ -11,8 +11,7 @@ namespace Modular.Orders.IntegrationTests;
 
 public sealed class OrderDatabaseFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder()
-        .WithImage("postgres:16-alpine")
+    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:16-alpine")
         .WithDatabase("eshop")
         .Build();
 

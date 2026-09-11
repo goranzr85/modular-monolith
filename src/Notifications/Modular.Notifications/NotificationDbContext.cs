@@ -25,17 +25,17 @@ public sealed class NotificationDbContext : DbContext
 
             builder.ComplexProperty(c => c.FullName, buildAction =>
             {
-                buildAction.Property(o => o!.FirstName)
+                buildAction.Property(o => o.FirstName)
                     .HasColumnName("FirstName")
                     .HasMaxLength(FullNameConfiguration.FirstNameLength)
                     .IsRequired();
 
-                buildAction.Property(o => o!.LastName)
+                buildAction.Property(o => o.LastName)
                     .HasColumnName("LastName")
                     .HasMaxLength(FullNameConfiguration.LastNameLength)
                     .IsRequired();
 
-                buildAction.Property(o => o!.MiddleName)
+                buildAction.Property(o => o.MiddleName)
                     .HasColumnName("MiddleName")
                     .HasMaxLength(FullNameConfiguration.MiddleNameLength)
                     .IsRequired(false);
@@ -45,17 +45,17 @@ public sealed class NotificationDbContext : DbContext
 
             builder.ComplexProperty(c => c.Contact, buildAction =>
             {
-                buildAction.Property(o => o!.Email)
+                buildAction.Property(o => o.Email)
                     .HasColumnName("Email")
                     .HasMaxLength(ContactConfiguration.EmailMaxLength)
                     .IsRequired(false);
 
-                buildAction.Property(o => o!.Phone)
+                buildAction.Property(o => o.Phone)
                     .HasColumnName("Phone")
                     .HasMaxLength(ContactConfiguration.PhoneMaxLength)
                     .IsRequired(false);
 
-                buildAction.Property(o => o!.PrimaryContactType)
+                buildAction.Property(o => o.PrimaryContactType)
                     .HasColumnName("PrimaryContactType")
                     .HasConversion<string>()
                     .IsRequired();

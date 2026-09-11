@@ -39,8 +39,6 @@ public static class ServiceRegistrations
             .AddTrigger(trigger => trigger.ForJob(jobKey)
                                         .WithSimpleSchedule(schedule => schedule.WithIntervalInSeconds(10)
                                         .RepeatForever()));
-
-            //configure.UseMicrosoftDependencyInjectionJobFactory();
         });
 
 

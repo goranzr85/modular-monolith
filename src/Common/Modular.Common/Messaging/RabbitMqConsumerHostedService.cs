@@ -93,6 +93,11 @@ public sealed class RabbitMqConsumerHostedService<TConsumer> : BackgroundService
 
     private async Task HandleMessageAsync(BasicDeliverEventArgs ea, CancellationToken stoppingToken)
     {
+        // _channel is assigned in StartAsync before this handler can ever run (it is only wired up as the
+        // consumer's ReceivedAsync callback after that assignment), but that ordering isn't visible to
+        // nullable analysis across methods.
+        IChannel channel = _channel!;
+
         string? typeName = ea.BasicProperties.Type;
 
         ActivityContext parentContext = ExtractParentContext(ea.BasicProperties);
@@ -111,7 +116,7 @@ public sealed class RabbitMqConsumerHostedService<TConsumer> : BackgroundService
             _logger.LogWarning("Queue {Queue} received an unrecognized message type {Type}; dead-lettering.",
                 _queueName, typeName);
             RabbitMqTelemetry.MessagesDeadLettered.Add(1, metricTag);
-            await _channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false,
+            await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false,
                 cancellationToken: stoppingToken);
             return;
         }
@@ -127,7 +132,7 @@ public sealed class RabbitMqConsumerHostedService<TConsumer> : BackgroundService
             _logger.LogError(ex, "Queue {Queue} failed to deserialize message of type {Type}; dead-lettering.",
                 _queueName, typeName);
             RabbitMqTelemetry.MessagesDeadLettered.Add(1, metricTag);
-            await _channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false,
+            await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false,
                 cancellationToken: stoppingToken);
             return;
         }
@@ -138,7 +143,7 @@ public sealed class RabbitMqConsumerHostedService<TConsumer> : BackgroundService
             _logger.LogError("Queue {Queue} deserialized a null message of type {Type}; dead-lettering.",
                 _queueName, typeName);
             RabbitMqTelemetry.MessagesDeadLettered.Add(1, metricTag);
-            await _channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false,
+            await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false,
                 cancellationToken: stoppingToken);
             return;
         }
@@ -151,7 +156,7 @@ public sealed class RabbitMqConsumerHostedService<TConsumer> : BackgroundService
                 TConsumer consumer = scope.ServiceProvider.GetRequiredService<TConsumer>();
                 await handler.Invoke(consumer, message, stoppingToken);
 
-                await _channel!.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken: stoppingToken);
+                await channel.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken: stoppingToken);
                 RabbitMqTelemetry.MessagesConsumed.Add(1, metricTag);
                 RabbitMqTelemetry.ConsumeDuration.Record(
                     Stopwatch.GetElapsedTime(startTimestamp).TotalMilliseconds, metricTag);
@@ -172,7 +177,7 @@ public sealed class RabbitMqConsumerHostedService<TConsumer> : BackgroundService
                 RabbitMqTelemetry.MessagesDeadLettered.Add(1, metricTag);
                 RabbitMqTelemetry.ConsumeDuration.Record(
                     Stopwatch.GetElapsedTime(startTimestamp).TotalMilliseconds, metricTag);
-                await _channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false,
+                await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false,
                     cancellationToken: stoppingToken);
                 return;
             }

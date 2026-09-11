@@ -6,7 +6,11 @@ namespace Modular.Orders.UseCases.Common;
 
 public class Product
 {
+    // The setter is never called in C# code - EF Core assigns this reflectively after insert
+    // (Id is a DB-generated identity column), which SonarAnalyzer can't see.
+#pragma warning disable S1144
     public int Id { get; private set; }
+#pragma warning restore S1144
     public string SKU { get; private set; }
     public string Name { get; private set; }
     public string Description { get; private set; }

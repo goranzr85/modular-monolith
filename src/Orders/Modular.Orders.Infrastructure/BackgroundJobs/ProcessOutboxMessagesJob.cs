@@ -36,11 +36,11 @@ public sealed class ProcessOutboxMessagesJob : IJob
         List<OutboxMessage> outboxMessages = await _orderDbContext.OutboxMessages
              .Where(m => m.ProcessedOnUtc == null)
              .Take(20)
-             .ToListAsync();
+             .ToListAsync(CancellationToken.None);
 
         activity.SetBatchSize(outboxMessages.Count);
 
-        foreach (OutboxMessage? outboxMessage in outboxMessages)
+        foreach (OutboxMessage outboxMessage in outboxMessages)
         {
             var domainEvent = JsonConvert.DeserializeObject(outboxMessage.Content, new JsonSerializerSettings
             {
@@ -58,12 +58,12 @@ public sealed class ProcessOutboxMessagesJob : IJob
             await pipeline.ExecuteAsync(async ct =>
             {
                 await _publisher.PublishAsync(domainEvent, outboxMessage.TraceParent, ct);
-            });
+            }, CancellationToken.None);
 
-            outboxMessage!.ProcessedOnUtc = DateTime.UtcNow;
+            outboxMessage.ProcessedOnUtc = DateTime.UtcNow;
         }
 
-        await _orderDbContext.SaveChangesAsync();
+        await _orderDbContext.SaveChangesAsync(CancellationToken.None);
 
         _logger.LogBatchProcessed(outboxMessages.Count, "outbox");
     }

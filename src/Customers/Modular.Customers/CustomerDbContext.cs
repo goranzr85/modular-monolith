@@ -28,17 +28,17 @@ public sealed class CustomerDbContext : DbContext
 
             builder.ComplexProperty(c => c.FullName, buildAction =>
             {
-                buildAction.Property(o => o!.FirstName)
+                buildAction.Property(o => o.FirstName)
                     .HasColumnName("FirstName")
                     .HasMaxLength(FullNameConfiguration.FirstNameLength)
                     .IsRequired();
 
-                buildAction.Property(o => o!.LastName)
+                buildAction.Property(o => o.LastName)
                     .HasColumnName("LastName")
                     .HasMaxLength(FullNameConfiguration.LastNameLength)
                     .IsRequired();
 
-                buildAction.Property(o => o!.MiddleName)
+                buildAction.Property(o => o.MiddleName)
                     .HasColumnName("MiddleName")
                     .HasMaxLength(FullNameConfiguration.MiddleNameLength)
                     .IsRequired(false);
@@ -48,22 +48,22 @@ public sealed class CustomerDbContext : DbContext
 
             builder.ComplexProperty(c => c.Address, buildAction =>
             {
-                buildAction.Property(o => o!.City)
+                buildAction.Property(o => o.City)
                     .HasColumnName("City")
                     .HasMaxLength(AddressConfiguration.CityMaxLength)
                     .IsRequired();
 
-                buildAction.Property(o => o!.Street)
+                buildAction.Property(o => o.Street)
                     .HasColumnName("Street")
                     .HasMaxLength(AddressConfiguration.StreetMaxLength)
                     .IsRequired();
 
-                buildAction.Property(o => o!.State)
+                buildAction.Property(o => o.State)
                     .HasColumnName("State")
                     .HasMaxLength(AddressConfiguration.StateMaxLength)
                     .IsRequired();
 
-                buildAction.Property(o => o!.Zip)
+                buildAction.Property(o => o.Zip)
                     .HasColumnName("Zip")
                     .HasMaxLength(AddressConfiguration.ZipMaxLength)
                     .IsRequired();
@@ -73,22 +73,22 @@ public sealed class CustomerDbContext : DbContext
             
             builder.ComplexProperty(c => c.ShippingAddress, buildAction =>
             {
-                buildAction.Property(o => o!.City)
+                buildAction.Property(o => o.City)
                     .HasColumnName("ShippingCity")
                     .HasMaxLength(AddressConfiguration.CityMaxLength)
                     .IsRequired();
 
-                buildAction.Property(o => o!.Street)
+                buildAction.Property(o => o.Street)
                     .HasColumnName("ShippingStreet")
                     .HasMaxLength(AddressConfiguration.StreetMaxLength)
                     .IsRequired();
 
-                buildAction.Property(o => o!.State)
+                buildAction.Property(o => o.State)
                     .HasColumnName("ShippingState")
                     .HasMaxLength(AddressConfiguration.StateMaxLength)
                     .IsRequired();
 
-                buildAction.Property(o => o!.Zip)
+                buildAction.Property(o => o.Zip)
                     .HasColumnName("ShippingZip")
                     .HasMaxLength(AddressConfiguration.ZipMaxLength)
                     .IsRequired();
@@ -98,17 +98,17 @@ public sealed class CustomerDbContext : DbContext
 
             builder.ComplexProperty(c => c.Contact, buildAction =>
             {
-                buildAction.Property(o => o!.Email)
+                buildAction.Property(o => o.Email)
                     .HasColumnName("Email")
                     .HasMaxLength(ContactConfiguration.EmailMaxLength)
                     .IsRequired(false);
 
-                buildAction.Property(o => o!.Phone)
+                buildAction.Property(o => o.Phone)
                     .HasColumnName("Phone")
                     .HasMaxLength(ContactConfiguration.PhoneMaxLength)
                     .IsRequired(false);
 
-                buildAction.Property(o => o!.PrimaryContactType)
+                buildAction.Property(o => o.PrimaryContactType)
                     .HasColumnName("PrimaryContactType")
                     .HasConversion<string>()
                     .HasMaxLength(ContactConfiguration.PrimaryContactTypeMaxLength)
