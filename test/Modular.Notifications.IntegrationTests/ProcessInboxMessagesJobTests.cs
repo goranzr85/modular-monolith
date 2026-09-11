@@ -50,8 +50,8 @@ public sealed class ProcessInboxMessagesJobTests
             OrderId = orderId,
             CustomerId = Guid.NewGuid(),
             ShippedDate = DateOnly.FromDateTime(DateTime.UtcNow),
-            Products = [("Widget", 2u, Price.Create(9.99m))],
-            TotalAmounts = Price.Create(19.98m),
+            Products = [("Widget", 2u, Price.Create(9.99m).Value)],
+            TotalAmounts = Price.Create(19.98m).Value,
         };
         await app.Publisher.PublishAsync(shippedEvent);
         InboxMessage? received = await Eventually.WaitForAsync(() => dbContext.InboxMessages.AsNoTracking()
@@ -76,6 +76,8 @@ public sealed class ProcessInboxMessagesJobTests
 
         ProcessInboxMessagesJob job = ActivatorUtilities.CreateInstance<ProcessInboxMessagesJob>(scope.ServiceProvider);
 
-        await job.Execute(null!);
+        Exception? exception = await Record.ExceptionAsync(() => job.Execute(null!));
+
+        Assert.Null(exception);
     }
 }

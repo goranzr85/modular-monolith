@@ -33,11 +33,11 @@ public sealed class ProcessInboxMessagesJob : IJob
         List<InboxMessage> outboxMessages = await _notificationDbContext.InboxMessages
              .Where(m => m.ProcessedAt == null)
              .Take(20)
-             .ToListAsync();
+             .ToListAsync(CancellationToken.None);
 
         activity.SetBatchSize(outboxMessages.Count);
 
-        foreach (InboxMessage? inboxMessage in outboxMessages)
+        foreach (InboxMessage inboxMessage in outboxMessages)
         {
             object? domainEvent = JsonConvert.DeserializeObject(inboxMessage.Payload, new JsonSerializerSettings
             {
@@ -64,10 +64,10 @@ public sealed class ProcessInboxMessagesJob : IJob
                 continue;
             }
 
-            inboxMessage!.ProcessedAt = DateTime.UtcNow;
+            inboxMessage.ProcessedAt = DateTime.UtcNow;
         }
 
-        await _notificationDbContext.SaveChangesAsync();
+        await _notificationDbContext.SaveChangesAsync(CancellationToken.None);
 
         _logger.LogBatchProcessed(outboxMessages.Count, "inbox");
     }

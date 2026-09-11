@@ -32,8 +32,8 @@ public sealed class OrderShippedNotificationHandlerTests
             OrderId = orderId,
             CustomerId = Guid.NewGuid(),
             ShippedDate = DateOnly.FromDateTime(DateTime.UtcNow),
-            Products = [("Widget", 2u, Price.Create(9.99m))],
-            TotalAmounts = Price.Create(19.98m),
+            Products = [("Widget", 2u, Price.Create(9.99m).Value)],
+            TotalAmounts = Price.Create(19.98m).Value,
         };
 
         await app.Publisher.PublishAsync(shippedEvent);

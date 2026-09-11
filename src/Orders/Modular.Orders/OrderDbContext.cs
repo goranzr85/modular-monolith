@@ -23,7 +23,7 @@ public sealed class OrderDbContext : DbContext
 
         var priceConverter = new ValueConverter<Price, decimal>(
             price => (decimal)price,
-            value => Price.Create(value));
+            value => Price.FromPersistedValue(value));
 
         modelBuilder.Entity<Order>(builder =>
         {

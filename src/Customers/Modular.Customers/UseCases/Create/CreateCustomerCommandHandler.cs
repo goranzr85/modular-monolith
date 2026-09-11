@@ -3,6 +3,7 @@ using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Modular.Common;
 using Modular.Common.User;
+using Modular.Customers.Errors;
 using Modular.Customers.Models;
 
 namespace Modular.Customers.UseCases.Create;
@@ -39,11 +40,14 @@ internal sealed class CreateCustomerCommandHandler
             return fullNameResponse.FirstError;
         }
 
-        Address address = Address.Create(request.Address.Street, request.Address.City, request.Address.State, request.Address.Zip);
+        ErrorOr<(Address Address, Address ShippingAddress)> addressResult = AddressFactory.CreateWithFallback(request.Address, request.ShippingAddress);
 
-        Address shippingAddress = request.ShippingAddress is not null ?
-                Address.Create(request.ShippingAddress.Street, request.ShippingAddress.City, request.ShippingAddress.State, request.ShippingAddress.Zip)
-                : address;
+        if (addressResult.IsError)
+        {
+            return addressResult.FirstError;
+        }
+
+        (Address address, Address shippingAddress) = addressResult.Value;
 
         ErrorOr<Contact> contactResponse = await _contactFactory.CreateAsync(request.Email, request.Phone, request.PrimaryContactType);
 
@@ -52,10 +56,17 @@ internal sealed class CreateCustomerCommandHandler
             return contactResponse.FirstError;
         }
 
+        ErrorOr<Customer> customerResponse = Customer.Create(fullNameResponse.Value, address, shippingAddress, contactResponse.Value);
+
+        if (customerResponse.IsError)
+        {
+            return customerResponse.FirstError;
+        }
+
+        Customer customer = customerResponse.Value;
+
         try
         {
-            Customer customer = Customer.Create(fullNameResponse.Value, address, shippingAddress, contactResponse.Value);
-
             await _customerDbContext.Customers.AddAsync(customer, cancellationToken);
             await _customerDbContext.SaveChangesAsync(cancellationToken);
 
@@ -64,7 +75,7 @@ internal sealed class CreateCustomerCommandHandler
         catch (Exception ex)
         {
             _logger.LogError(ex, "Creating customer failed");
-            return Error.Failure("Customer.Failure", "Creating customer failed");
+            return CustomerErrors.CustomerNotCreated();
         }
     }
 }

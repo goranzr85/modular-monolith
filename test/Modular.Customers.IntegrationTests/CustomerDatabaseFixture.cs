@@ -25,13 +25,11 @@ internal sealed class NoopHostApplicationLifetime : IHostApplicationLifetime
 
 public sealed class CustomerDatabaseFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder()
-        .WithImage("postgres:16-alpine")
+    private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder("postgres:16-alpine")
         .WithDatabase("eshop")
         .Build();
 
-    private readonly RabbitMqContainer _rabbitContainer = new RabbitMqBuilder()
-        .WithImage("rabbitmq:4-management-alpine")
+    private readonly RabbitMqContainer _rabbitContainer = new RabbitMqBuilder("rabbitmq:4-management-alpine")
         .Build();
 
     private ServiceProvider? _serviceProvider;

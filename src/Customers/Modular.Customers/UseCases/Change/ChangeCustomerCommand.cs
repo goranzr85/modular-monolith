@@ -3,6 +3,7 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Modular.Common;
 using Modular.Common.User;
+using Modular.Customers.Errors;
 using Modular.Customers.Models;
 
 namespace Modular.Customers.UseCases.Change;
@@ -39,7 +40,7 @@ internal sealed class ChangeCustomerCommandHandler
 
         if (customer is null)
         {
-            return Error.NotFound("Customers.NotFound", "Customer does not exist.");
+            return CustomerErrors.CustomerNotFound(request.CustomerId);
         }
 
         if (IsContactChanged(request, customer))
@@ -54,12 +55,15 @@ internal sealed class ChangeCustomerCommandHandler
             customer.ChangeContact(newContactResponse.Value);
         }
 
-        Address newAddress = Address.Create(request.Address.Street, request.Address.City, request.Address.State, request.Address.Zip);
-        customer.ChangeAddress(newAddress);
+        ErrorOr<(Address Address, Address ShippingAddress)> addressResult = AddressFactory.CreateWithFallback(request.Address, request.ShippingAddress);
 
-        Address newShippingAddress = request.ShippingAddress is not null ?
-                Address.Create(request.ShippingAddress.Street, request.ShippingAddress.City, request.ShippingAddress.State, request.ShippingAddress.Zip)
-                : newAddress;
+        if (addressResult.IsError)
+        {
+            return addressResult.FirstError;
+        }
+
+        (Address newAddress, Address newShippingAddress) = addressResult.Value;
+        customer.ChangeAddress(newAddress);
         customer.ChangeShippingAddress(newShippingAddress);
 
         ErrorOr<FullName> fullNameResponse = FullName.Create(request.FirstName, request.MiddleName, request.LastName);
@@ -69,7 +73,12 @@ internal sealed class ChangeCustomerCommandHandler
             return fullNameResponse.FirstError;
         }
 
-        customer.ChangeFullName(fullNameResponse.Value);
+        ErrorOr<Unit> changeFullNameResult = customer.ChangeFullName(fullNameResponse.Value);
+
+        if (changeFullNameResult.IsError)
+        {
+            return changeFullNameResult.FirstError;
+        }
 
         _customerDbContext.Customers.Update(customer);
         await _customerDbContext.SaveChangesAsync(cancellationToken);

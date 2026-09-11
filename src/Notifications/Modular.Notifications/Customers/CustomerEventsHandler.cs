@@ -35,7 +35,7 @@ internal sealed class CustomerEventsHandler : IIntegrationEventConsumer<Customer
         customer = new Customer
         {
             Id = message.Id,
-            FullName = CustomerFullName.Create(fullName.FirstName, fullName.MiddleName, fullName.LastName)!.Value!,
+            FullName = CustomerFullName.Create(fullName.FirstName, fullName.MiddleName, fullName.LastName).Value,
             Contact = new CustomerContact(contact.Email, contact.PhoneNumber, contact.PrimaryContactType),
         };
 
@@ -55,7 +55,7 @@ internal sealed class CustomerEventsHandler : IIntegrationEventConsumer<Customer
 
         FullName fullName = message.FullName;
 
-        customer.FullName = CustomerFullName.Create(fullName.FirstName, fullName.MiddleName, fullName.LastName)!.Value!;
+        customer.FullName = CustomerFullName.Create(fullName.FirstName, fullName.MiddleName, fullName.LastName).Value;
 
         _dbContext.Customers.Update(customer);
         await _dbContext.SaveChangesAsync(cancellationToken);

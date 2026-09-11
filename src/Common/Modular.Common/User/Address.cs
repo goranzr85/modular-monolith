@@ -1,4 +1,7 @@
-﻿namespace Modular.Common.User;
+using ErrorOr;
+using Modular.Common.Errors;
+
+namespace Modular.Common.User;
 
 public sealed class Address : IEquatable<Address>
 {
@@ -15,26 +18,26 @@ public sealed class Address : IEquatable<Address>
         Zip = zip;
     }
 
-    public static Address Create(string street, string city, string state, string zip)
+    public static ErrorOr<Address> Create(string street, string city, string state, string zip)
     {
         if (string.IsNullOrEmpty(street))
         {
-            throw new ArgumentException("Street cannot be null or empty.", nameof(street));
+            return AddressErrors.InvalidStreet();
         }
 
         if (string.IsNullOrEmpty(city))
         {
-            throw new ArgumentException("City cannot be null or empty.", nameof(city));
+            return AddressErrors.InvalidCity();
         }
 
         if (string.IsNullOrEmpty(state))
         {
-            throw new ArgumentException("State cannot be null or empty.", nameof(state));
+            return AddressErrors.InvalidState();
         }
 
         if (string.IsNullOrEmpty(zip))
         {
-            throw new ArgumentException("Zip cannot be null or empty.", nameof(zip));
+            return AddressErrors.InvalidZip();
         }
 
         return new Address(street, city, state, zip);

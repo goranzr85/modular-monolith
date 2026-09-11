@@ -28,7 +28,7 @@ public sealed class RemoveProductCommandTests
 
         ErrorOr<Guid> result = await OrderTestHelpers.RunAsync(_fixture, async sp =>
         {
-            List<OrderItem> items = [new OrderItem { ProductId = productId, Quantity = 2, Price = Price.Create(9.99m) }];
+            List<OrderItem> items = [new OrderItem { ProductId = productId, Quantity = 2, Price = Price.Create(9.99m).Value }];
             return await sp.GetRequiredService<CreateOrderCommandHandler>().Handle(new CreateOrderCommand(orderId, DateTimeOffset.UtcNow, Guid.NewGuid(), items), CancellationToken.None);
         });
         Assert.False(result.IsError);
@@ -65,21 +65,17 @@ public sealed class RemoveProductCommandTests
     }
 
     [Fact]
-    public async Task Handle_WithProductNotInOrder_ThrowsInvalidOperationException()
+    public async Task Handle_WithProductNotInOrder_ReturnsNotFound()
     {
-        // Documents current behavior: Order.RemoveItem throws a raw InvalidOperationException when the
-        // product isn't on the order, instead of the handler returning an ErrorOr NotFound result - Orders
-        // has no validation/error-wrapping layer for this path (see OrderErrors.ProductIsNotPlaced, which
-        // exists but isn't used here).
         (Guid orderId, _) = await SeedOrderWithItemAsync();
         int otherProductId = await OrderTestHelpers.RunAsync(_fixture, async sp =>
             await OrderTestHelpers.SeedProductAsync(sp.GetRequiredService<OrderDbContext>(), stockQuantity: 100));
 
-        await OrderTestHelpers.RunAsync(_fixture, async sp =>
-        {
-            RemoveProductCommandHandler handler = sp.GetRequiredService<RemoveProductCommandHandler>();
-            await Assert.ThrowsAsync<InvalidOperationException>(
-                () => handler.Handle(new RemoveProductCommand(orderId, otherProductId), CancellationToken.None));
-        });
+        ErrorOr<Unit> result = await OrderTestHelpers.RunAsync(_fixture, async sp =>
+            await sp.GetRequiredService<RemoveProductCommandHandler>().Handle(new RemoveProductCommand(orderId, otherProductId), CancellationToken.None));
+
+        Assert.True(result.IsError);
+        Assert.Equal(ErrorType.NotFound, result.FirstError.Type);
+        Assert.Equal("Order.ProductIsNotPlaced", result.FirstError.Code);
     }
 }

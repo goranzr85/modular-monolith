@@ -1,10 +1,16 @@
-﻿using Modular.Common;
+using ErrorOr;
+using Modular.Common;
+using Modular.Orders.Errors;
 
 namespace Modular.Orders.UseCases.Common;
 
 public class Product
 {
+    // The setter is never called in C# code - EF Core assigns this reflectively after insert
+    // (Id is a DB-generated identity column), which SonarAnalyzer can't see.
+#pragma warning disable S1144
     public int Id { get; private set; }
+#pragma warning restore S1144
     public string SKU { get; private set; }
     public string Name { get; private set; }
     public string Description { get; private set; }
@@ -15,24 +21,24 @@ public class Product
     {
     }
 
-    internal static Product Create(string sku, string name, string description, Price price)
+    internal static ErrorOr<Product> Create(string sku, string name, string description, Price price)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
-            throw new ArgumentException("Name cannot be empty.", nameof(name));
+            return OrderErrors.InvalidProductName();
         }
         if (string.IsNullOrWhiteSpace(description))
         {
-            throw new ArgumentException("Description cannot be empty.", nameof(description));
+            return OrderErrors.InvalidProductDescription();
         }
         if (price <= 0)
         {
-            throw new ArgumentException("Price cannot be less than or equal to zero.", nameof(price));
+            return OrderErrors.InvalidProductPrice();
         }
 
         if (string.IsNullOrWhiteSpace(sku))
         {
-            throw new ArgumentException("SKU cannot be empty.", nameof(sku));
+            return OrderErrors.InvalidProductSku();
         }
 
         return new Product
@@ -49,39 +55,45 @@ public class Product
         StockQuantity += quantity;
     }
 
-    internal void DecreaseStock(uint quantity)
+    internal ErrorOr<Unit> DecreaseStock(uint quantity)
     {
         if (StockQuantity < quantity)
         {
-            throw new InvalidOperationException("Insufficient stock quantity.");
+            return OrderErrors.InsufficientStock(Id);
         }
 
         StockQuantity -= quantity;
+
+        return Unit.Value;
     }
 
-    internal void ChangePrice(Price price)
+    internal ErrorOr<Unit> ChangePrice(Price price)
     {
         if (price <= 0)
         {
-            throw new ArgumentException("Price cannot be less than or equal to zero.", nameof(price));
+            return OrderErrors.InvalidProductPrice();
         }
 
         Price = price;
+
+        return Unit.Value;
     }
 
-    internal void Change(string name, string description)
+    internal ErrorOr<Unit> Change(string name, string description)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
-            throw new ArgumentException("Name cannot be empty.", nameof(name));
+            return OrderErrors.InvalidProductName();
         }
 
         if (string.IsNullOrWhiteSpace(description))
         {
-            throw new ArgumentException("Description cannot be empty.", nameof(description));
+            return OrderErrors.InvalidProductDescription();
         }
 
         Name = name;
         Description = description;
+
+        return Unit.Value;
     }
 }

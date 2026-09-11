@@ -32,7 +32,7 @@ public sealed class CreateOrderCommandTests
         ErrorOr<Guid> result = await OrderTestHelpers.RunAsync(_fixture, async sp =>
         {
             CreateOrderCommandHandler handler = sp.GetRequiredService<CreateOrderCommandHandler>();
-            List<OrderItem> items = [new OrderItem { ProductId = productId, Quantity = 3, Price = Price.Create(9.99m) }];
+            List<OrderItem> items = [new OrderItem { ProductId = productId, Quantity = 3, Price = Price.Create(9.99m).Value }];
             return await handler.Handle(new CreateOrderCommand(orderId, DateTimeOffset.UtcNow, customerId, items), CancellationToken.None);
         });
 
@@ -61,14 +61,14 @@ public sealed class CreateOrderCommandTests
 
         ErrorOr<Guid> first = await OrderTestHelpers.RunAsync(_fixture, async sp =>
         {
-            List<OrderItem> items = [new OrderItem { ProductId = productId, Quantity = 1, Price = Price.Create(9.99m) }];
+            List<OrderItem> items = [new OrderItem { ProductId = productId, Quantity = 1, Price = Price.Create(9.99m).Value }];
             return await sp.GetRequiredService<CreateOrderCommandHandler>().Handle(new CreateOrderCommand(orderId, DateTimeOffset.UtcNow, Guid.NewGuid(), items), CancellationToken.None);
         });
         Assert.False(first.IsError);
 
         ErrorOr<Guid> second = await OrderTestHelpers.RunAsync(_fixture, async sp =>
         {
-            List<OrderItem> items = [new OrderItem { ProductId = productId, Quantity = 1, Price = Price.Create(9.99m) }];
+            List<OrderItem> items = [new OrderItem { ProductId = productId, Quantity = 1, Price = Price.Create(9.99m).Value }];
             return await sp.GetRequiredService<CreateOrderCommandHandler>().Handle(new CreateOrderCommand(orderId, DateTimeOffset.UtcNow, Guid.NewGuid(), items), CancellationToken.None);
         });
 
@@ -78,16 +78,18 @@ public sealed class CreateOrderCommandTests
     }
 
     [Fact]
-    public async Task Handle_WithEmptyItems_ThrowsArgumentException()
+    public async Task Handle_WithEmptyItems_ReturnsValidationError()
     {
-        // Documents current behavior: Modular.Orders has no FluentValidation layer, so Order.Create's
-        // guard clauses throw raw exceptions instead of the handler returning an ErrorOr validation error.
-        await OrderTestHelpers.RunAsync(_fixture, async sp =>
+        ErrorOr<Guid> result = await OrderTestHelpers.RunAsync(_fixture, async sp =>
         {
             CreateOrderCommandHandler handler = sp.GetRequiredService<CreateOrderCommandHandler>();
             CreateOrderCommand command = new(Guid.NewGuid(), DateTimeOffset.UtcNow, Guid.NewGuid(), []);
 
-            await Assert.ThrowsAsync<ArgumentException>(() => handler.Handle(command, CancellationToken.None));
+            return await handler.Handle(command, CancellationToken.None);
         });
+
+        Assert.True(result.IsError);
+        Assert.Equal(ErrorType.Validation, result.FirstError.Type);
+        Assert.Equal("Order.EmptyItems", result.FirstError.Code);
     }
 }

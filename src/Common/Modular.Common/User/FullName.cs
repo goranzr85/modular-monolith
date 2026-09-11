@@ -1,4 +1,5 @@
 ﻿using ErrorOr;
+using Modular.Common.Errors;
 
 namespace Modular.Common.User;
 
@@ -19,12 +20,12 @@ public sealed class FullName
     {
         if (string.IsNullOrEmpty(firstName))
         {
-            return Error.Validation("Customers.InvalidFirstName", "FirstName is not valid.");
+            return FullNameErrors.InvalidFirstName();
         }
 
         if (string.IsNullOrEmpty(lastName))
         {
-            return Error.Validation("Customers.InvalidLastName", "LastName is not valid.");
+            return FullNameErrors.InvalidLastName();
         }
 
         return new FullName(firstName, middleName, lastName);

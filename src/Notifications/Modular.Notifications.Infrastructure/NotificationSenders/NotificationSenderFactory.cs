@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Modular.Common;
+using Modular.Notifications.Errors;
 using Modular.Orders.Integrations;
 
 namespace Modular.Notifications.Infrastructure.NotificationSenders;
@@ -28,19 +29,19 @@ internal sealed class NotificationSenderFactory : INotificationSender
 
         if (orderShippedEvent is null)
         {
-            return Error.Failure("Invalid notification type");
+            return NotificationErrors.InvalidNotificationType();
         }
 
         Common.User.PrimaryContactType primaryContactType = await _notificationDbContext.Customers
-               .Where(c => c.Id == orderShippedEvent!.CustomerId)
-               .Select(c => c!.Contact.PrimaryContactType)
+               .Where(c => c.Id == orderShippedEvent.CustomerId)
+               .Select(c => c.Contact.PrimaryContactType)
                .FirstOrDefaultAsync();
 
         ErrorOr<Unit> result = primaryContactType switch
         {
             Common.User.PrimaryContactType.Email => await _emailNotificationsSender.SendAsync(notification),
             Common.User.PrimaryContactType.Phone => await _smsNotificationsSender.SendAsync(notification),
-            _ => Error.Failure("Unsupported primary contact type")
+            _ => NotificationErrors.UnsupportedPrimaryContactType()
         };
 
         return result;

@@ -1,5 +1,7 @@
-﻿using Modular.Common;
+using ErrorOr;
+using Modular.Common;
 using Modular.Common.User;
+using Modular.Customers.Errors;
 using Modular.Customers.IntegrationEvents;
 using FullName = Modular.Common.User.FullName;
 using Address = Modular.Common.User.Address;
@@ -66,11 +68,11 @@ public sealed class Customer : AggregateRoot
         Contact = contact;
     }
 
-    internal void ChangeFullName(FullName fullName)
+    internal ErrorOr<Unit> ChangeFullName(FullName fullName)
     {
         if (fullName is null)
         {
-            throw new ArgumentNullException(nameof(fullName), "FullName cannot be null.");
+            return CustomerErrors.InvalidFullName();
         }
 
         RaiseEvent(new CustomerChangedNameEvent(Id,
@@ -79,23 +81,25 @@ public sealed class Customer : AggregateRoot
             fullName.LastName)));
 
         FullName = fullName;
+
+        return Unit.Value;
     }
 
-    public static Customer Create(FullName fullName, Address address, Address? shippingAddress, Contact contact)
+    public static ErrorOr<Customer> Create(FullName fullName, Address address, Address? shippingAddress, Contact contact)
     {
         if (fullName is null)
         {
-            throw new ArgumentNullException(nameof(fullName), "FullName cannot be null.");
+            return CustomerErrors.InvalidFullName();
         }
 
         if (address is null)
         {
-            throw new ArgumentNullException(nameof(address), "Address cannot be null.");
+            return CustomerErrors.InvalidAddress();
         }
 
         if (contact is null)
         {
-            throw new ArgumentNullException(nameof(contact), "Contact cannot be null.");
+            return CustomerErrors.InvalidContact();
         }
 
         var id = Ulid.NewUlid().ToGuid();
@@ -109,5 +113,3 @@ public sealed class Customer : AggregateRoot
         return customer;
     }
 }
-
-

@@ -12,9 +12,6 @@
 		<PackageReference Include="Carter" />
 		<PackageReference Include="ErrorOr" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
-		<PackageReference Include="Microsoft.CodeAnalysis.Common" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
 		<PackageReference Include="Ulid" />
 	</ItemGroup>

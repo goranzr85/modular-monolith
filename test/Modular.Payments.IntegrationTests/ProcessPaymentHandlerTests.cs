@@ -13,8 +13,7 @@ namespace Modular.Payments.IntegrationTests;
 
 public sealed class ProcessPaymentHandlerTests : IAsyncLifetime
 {
-    private readonly RabbitMqContainer _rabbitContainer = new RabbitMqBuilder()
-        .WithImage("rabbitmq:4-management-alpine")
+    private readonly RabbitMqContainer _rabbitContainer = new RabbitMqBuilder("rabbitmq:4-management-alpine")
         .Build();
 
     private ServiceProvider _provider = null!;
@@ -64,7 +63,7 @@ public sealed class ProcessPaymentHandlerTests : IAsyncLifetime
             await PublishedMessageListener<PaymentProcessedIntegrationEvent>.StartAsync(_connection);
 
         IIntegrationEventPublisher publisher = _provider.GetRequiredService<IIntegrationEventPublisher>();
-        await publisher.PublishAsync(new ProcessPayment(orderId, customerId, Price.Create(49.99m)));
+        await publisher.PublishAsync(new ProcessPayment(orderId, customerId, Price.Create(49.99m).Value));
 
         Assert.True(await listener.AnyAsync(e => e.OrderId == orderId));
     }
@@ -81,7 +80,7 @@ public sealed class ProcessPaymentHandlerTests : IAsyncLifetime
             await PublishedMessageListener<PaymentProcessedIntegrationEvent>.StartAsync(_connection);
 
         IIntegrationEventPublisher publisher = _provider.GetRequiredService<IIntegrationEventPublisher>();
-        await publisher.PublishAsync(new ProcessPayment(orderId, Guid.NewGuid(), Price.Create(0m)));
+        await publisher.PublishAsync(new ProcessPayment(orderId, Guid.NewGuid(), Price.Create(0m).Value));
 
         Assert.True(await listener.AnyAsync(e => e.OrderId == orderId));
     }
@@ -96,8 +95,8 @@ public sealed class ProcessPaymentHandlerTests : IAsyncLifetime
             await PublishedMessageListener<PaymentProcessedIntegrationEvent>.StartAsync(_connection);
 
         IIntegrationEventPublisher publisher = _provider.GetRequiredService<IIntegrationEventPublisher>();
-        await publisher.PublishAsync(new ProcessPayment(firstOrderId, Guid.NewGuid(), Price.Create(10m)));
-        await publisher.PublishAsync(new ProcessPayment(secondOrderId, Guid.NewGuid(), Price.Create(20m)));
+        await publisher.PublishAsync(new ProcessPayment(firstOrderId, Guid.NewGuid(), Price.Create(10m).Value));
+        await publisher.PublishAsync(new ProcessPayment(secondOrderId, Guid.NewGuid(), Price.Create(20m).Value));
 
         Assert.True(await listener.AnyAsync(e => e.OrderId == firstOrderId));
         Assert.True(await listener.AnyAsync(e => e.OrderId == secondOrderId));

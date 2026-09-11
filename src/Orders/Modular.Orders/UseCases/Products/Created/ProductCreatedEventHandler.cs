@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using ErrorOr;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Modular.Catalog.IntegrationEvents;
 using Modular.Common.Events;
@@ -19,13 +20,15 @@ internal sealed class ProductCreatedEventHandler : IIntegrationEventConsumer<Pro
 
     public async Task ConsumeAsync(ProductCreatedIntegrationEvent message, CancellationToken cancellationToken)
     {
-        Product product = Product.Create(message.Sku, message.Name, message.Description, message.Price);
+        ErrorOr<Product> productResult = Product.Create(message.Sku, message.Name, message.Description, message.Price);
 
-        if (product is null)
+        if (productResult.IsError)
         {
-            _logger.LogError("Product {Sku} not created.", message.Sku);
+            _logger.LogError("Product {Sku} not created: {Error}.", message.Sku, productResult.FirstError.Description);
             return;
         }
+
+        Product product = productResult.Value;
 
         bool productAlreadyExist = await _orderDbContext.Products.AnyAsync(p => p.SKU == message.Sku, cancellationToken);
 

@@ -15,6 +15,33 @@ internal static class OrderErrors
     internal static Error OrderAlreadyCreated(Guid orderId) =>
          Error.Validation("Order.OrderAlreadyCreated", $"Order with ID '{orderId}' is already created.");
 
+    internal static Error InvalidOrderId() =>
+         Error.Validation("Order.InvalidOrderId", "OrderId cannot be empty.");
+
+    internal static Error InvalidOrderDate() =>
+         Error.Validation("Order.InvalidOrderDate", "OrderDate cannot be empty.");
+
+    internal static Error InvalidCustomerId() =>
+         Error.Validation("Order.InvalidCustomerId", "CustomerId cannot be empty.");
+
+    internal static Error EmptyItems() =>
+         Error.Validation("Order.EmptyItems", "Items cannot be null or empty.");
+
+    internal static Error InvalidProductSku() =>
+         Error.Validation("Order.InvalidProductSku", "SKU cannot be empty.");
+
+    internal static Error InvalidProductName() =>
+         Error.Validation("Order.InvalidProductName", "Name cannot be empty.");
+
+    internal static Error InvalidProductDescription() =>
+         Error.Validation("Order.InvalidProductDescription", "Description cannot be empty.");
+
+    internal static Error InvalidProductPrice() =>
+         Error.Validation("Order.InvalidProductPrice", "Price cannot be less than or equal to zero.");
+
+    internal static Error InsufficientStock(int productId) =>
+         Error.Validation("Order.InsufficientStock", $"Insufficient stock quantity for product with ID '{productId}'.");
+
     internal static Error ProductNotFound(int productId) =>
          Error.NotFound("Order.ProductNotFound", $"Product with ID '{productId}' does not exist.");
 

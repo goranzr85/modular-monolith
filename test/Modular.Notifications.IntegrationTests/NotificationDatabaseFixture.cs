@@ -37,13 +37,11 @@ public sealed class NotificationTestApp : IAsyncDisposable
 // proved flaky (consumer dispatch doesn't cleanly isolate between unrelated tests sharing a connection).
 public sealed class NotificationDatabaseFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder()
-        .WithImage("postgres:16-alpine")
+    private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder("postgres:16-alpine")
         .WithDatabase("eshop")
         .Build();
 
-    private readonly RabbitMqContainer _rabbitContainer = new RabbitMqBuilder()
-        .WithImage("rabbitmq:4-management-alpine")
+    private readonly RabbitMqContainer _rabbitContainer = new RabbitMqBuilder("rabbitmq:4-management-alpine")
         .Build();
 
     public async Task InitializeAsync()

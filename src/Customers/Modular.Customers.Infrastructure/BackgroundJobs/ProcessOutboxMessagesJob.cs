@@ -34,7 +34,7 @@ public sealed class ProcessOutboxMessagesJob : IJob
         var outboxMessages = await _customerDbContext.OutboxMessages
              .Where(m => m.ProcessedOnUtc == null)
              .Take(20)
-             .ToListAsync();
+             .ToListAsync(CancellationToken.None);
 
         activity.SetBatchSize(outboxMessages.Count);
 
@@ -56,12 +56,12 @@ public sealed class ProcessOutboxMessagesJob : IJob
             await pipeline.ExecuteAsync(async ct =>
             {
                 await _publisher.PublishAsync(integrationEvent, outboxMessage.TraceParent, ct);
-            });
+            }, CancellationToken.None);
 
             outboxMessage.ProcessedOnUtc = DateTime.UtcNow;
         }
 
-        await _customerDbContext.SaveChangesAsync();
+        await _customerDbContext.SaveChangesAsync(CancellationToken.None);
 
         _logger.LogBatchProcessed(outboxMessages.Count, "outbox");
     }
